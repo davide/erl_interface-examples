@@ -1,0 +1,110 @@
+#####################################################
+		How to use Visual C++ 2008 Express Edition to build your ports
+#####################################################
+
+The erl_interface libraries that come with the erlang windows distribution (.lib files)
+were built using Microsoft Visual C++ (I reckon the one that bundles with Visual
+Studio 2005).
+
+If you don't want to spend some time - like I did :'( - trying to build erlang/erl_interface
+again just to get gcc compatible libraries (.a files) it makes perfect sense to build your
+ports using Microsoft's stuff.
+
+This document attempts to document all the things you might encounter while trying
+to use Visual C++ 2008 Express Edition as a development environment for your ports.
+
+The code we're trying to build is the one presented here:
+	http://erlang.org/doc/tutorial/erl_interface.html
+
+#####################################################
+
+	- Edit erl_comm.h so that it will build without MinGW's headers:
+		#ifdef WIN32
+		#include <io.h>
+		#else
+		#include <unistd.h>
+		#include <sys/types.h>
+		#endif
+
+	- fatal error C1083: Cannot open include file: 'erl_interface.h': No such file or directory
+		Add "c:\erl5.7.1\lib\erl_interface-3.6.1\include" to the list of directories to search for
+		while resolving #include references.
+		Project Properties -> Configuration Properties -> C/C++ -> Additional Include Directories
+		This is gcc's -I equivalent. :)
+		
+		In alternative... add the directories to all VC projects:
+		http://social.msdn.microsoft.com/forums/en-US/gametechnologiesdirectx101/thread/5d24f4af-a827-416f-b2e9-5bde479d6925/
+
+	- Cannot open include file: 'netdb.h'	
+		In the erl_interface headers the __WIN32__ macro is used to check for
+		a windows build but by default the VC compiler only sets the WIN32 macro.
+		So we'll need to edit the VC project settings so that it defines __WIN32__:
+		Project Properties -> Configuration Properties -> C/C++ -> Preprocessor -> Preprocessor Definitions:
+			WIN32;_DEBUG;_CONSOLE;__WIN32__
+			
+		Also... change erl_comm.h to use __WIN32__ instead of WIN32.
+
+	- warning C4996: 'read': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _read. See online help for details.
+		By default VC projects are set to produce C++ code. Change it by going to:
+		Project Properties -> Configuration Properties -> C/C++ -> Advanced -> Compile As
+			Compile as C Code (/TC)
+		
+		Humm... that didn't do it. :P No biggie, it's just a warning.
+		
+	- Edit you code so that it complies with whatever C standard VC's compiler in using.
+	(I had to move all variable declarations to the beginning of all functions and
+	 wasn't able to use variable-length arrays)
+
+	Remember to apply all the previous changes to both the Debug and Release Configurations. ;)
+
+	-	enotify.obj : error LNK2001: unresolved external symbol _erl_init
+		enotify.obj : error LNK2001: unresolved external symbol _erl_free_array
+		enotify.obj : error LNK2001: unresolved external symbol _erl_decode
+		enotify.obj : error LNK2001: unresolved external symbol _erl_mk_tuple
+		...
+	
+		erl_interface.lib and ei.lib aren't getting linked!
+			Project Properties -> Configuration Properties -> Linker -> General -> Additional Library Directories
+				"C:\erl5.7.1\lib\erl_interface-3.6.1\lib"
+			Project Properties -> Configuration Properties -> Linker -> Input -> Additional Dependencies
+				erl_interface.lib ei.lib
+	
+	-	ei.lib(ei_resolve.o) : error LNK2019: unresolved external symbol __imp__gethostbyname@4 referenced in function _ei_gethostbyname
+		ei.lib(ei_resolve.o) : error LNK2019: unresolved external symbol __imp__gethostbyaddr@12 referenced in function _ei_gethostbyaddr
+	
+		Add wsock32.lib to the project dependencies:
+			Project Properties -> Configuration Properties -> Linker -> Input -> Additional Dependencies
+				erl_interface.lib ei.lib wsock32.lib
+
+	- When building a release version you'll get this warning:
+			LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
+		This explains it:
+			http://msdn.microsoft.com/en-us/library/aa267384.aspx
+			The table below shows which libraries should be ignored depending on which run-time library you want to use.
+			To use this run-time library 				Ignore these libraries
+			Single-threaded (libc.lib) 					libcmt.lib, msvcrt.lib, libcd.lib, libcmtd.lib, msvcrtd.lib
+			Multithreaded (libcmt.lib) 					libc.lib, msvcrt.lib, libcd.lib, libcmtd.lib, msvcrtd.lib
+			Multithreaded using DLL (msvcrt.lib) 	libc.lib, libcmt.lib,  libcd.lib, libcmtd.lib, msvcrtd.lib
+			Debug Single-threaded (libcd.lib) 		libc.lib, libcmt.lib, msvcrt.lib, libcmtd.lib, msvcrtd.lib
+			Debug Multithreaded (libcmtd.lib) 		libc.lib, libcmt.lib, msvcrt.lib, libcd.lib, msvcrtd.lib
+			Debug Multithreaded using DLL (msvcrtd.lib) 	libc.lib, libcmt.lib, msvcrt.lib, libcd.lib, libcmtd.lib
+		
+		For a *release* non-debug multithreaded (using DDL) version of the run-time libraries you should add this to the linker command line:
+			/NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:libcmtd.lib /NODEFAULTLIB:msvcrtd.lib
+		That's in:
+			Project Properties -> Configuration Properties -> Linker -> Command Line -> Additional options
+	
+	- Another probable error is:
+			Linking...
+			LIBCMT.lib(dosmap.obj) : error LNK2005: __errno already defined in MSVCRT.lib(MSVCR90.dll)
+			LIBCMT.lib(invarg.obj) : error LNK2005: __invoke_watson already defined in MSVCRT.lib(MSVCR90.dll)
+			LIBCMT.lib(tidtable.obj) : error LNK2005: __encode_pointer already defined in MSVCRT.lib(MSVCR90.dll)
+			LIBCMT.lib(tidtable.obj) : error LNK2005: __decode_pointer already defined in MSVCRT.lib(MSVCR90.dll)
+		
+		This happens because both libcmt.lib and msvcrt.lib are getting linked.
+		Adding "/NODEFAULTLIB:libcmt.lib" to the linker command line solves this
+		issue in both the debug and release configurations.
+		
+	Sucess! :)
+
+#####################################################

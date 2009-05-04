@@ -1,0 +1,215 @@
+#####################################################
+						How to buid erl_interface using MinGW
+#####################################################
+
+This document is based on "Building erlang on Windows".
+You might want to take a look at that one first. ;)
+
+The build environment consists *solely* of:
+	- Cygwin
+	- MinGW
+
+Make sure you don't have any MSYS binaries in the system PATH before you start!
+Make sure you don't have any MSYS binaries in the system PATH before you start!
+Make sure you don't have any MSYS binaries in the system PATH before you start!
+You get the point.
+
+#####################################################
+
+1) Get and install complete Cygwin (latest)
+	- Install the latest STABLE version or you might get into some nasty problems.
+	
+	- install packages:
+		- devel - gcc
+		- devel - make
+		- lib - openssl
+		       - openssl-dev
+				-> openssl still doesn't get detected in the "./otp_build configure" step
+				-> any clues?
+	 
+	Optionally... get ride of the cygdrive prefix (to use /c/... instead of /c/cygdrive/...)
+		- Add this line in the beginning of your ~/.bashrc file:
+			mount --change-cygdrive-prefix /
+		- simply running the command on the prompt would change the prefix but the
+		  PATH environment variable would still contain paths with the /cygdrive prefix
+
+#####################################################
+
+2) Get and unpack the erlang source distribution with Cygwin's tar.
+	-> Unpacked using 7zip to:
+		c:/otp_src_R13B
+		
+#####################################################
+	
+3) set ERL_TOP to where you unpacked the source distribution
+	$ export ERL_TOP=/c/otp_src_R13B
+	$ cd $ERL_TOP
+	
+#####################################################
+
+4) Prepare environment for building with MingW
+
+	- Set the path variable so that MinGW's binaries are found before cygwin's gcc:
+		$ export PATH=/c/msys/1.0/mingw/bin:$PATH
+		
+	- Open ./otp_build and comment out these lines:
+			found2=false
+			for p in $P3; do
+			if [ -f "$p/wmc.exe" ]; then
+				found2=$p
+			fi
+			done
+		NOTICE:
+			I'm only doing this because I didn't find any simple way to install
+			wine on cygwin (on Windows... :|). I'm guessing this makes sense
+			when using MinGW for building on other platforms...
+	  
+	- Run this:
+		$ eval `./otp_build env_mingw32`
+
+#####################################################
+
+5) Check if the PATH to MinGW's tools are correct
+
+		$ which gcc
+		/c/msys/1.0/mingw/bin/gcc
+		$ which link
+		/usr/bin/link
+			Humm... is this the correct linker to use?
+
+#####################################################
+
+6) Set the CC_SH_DEBUG_LOG and LD_SH_DEBUG_LOG to get easier access to what
+	  cc.sh and ld.sh are doing during the build process.
+		$ export CC_SH_DEBUG_LOG=/c/otp_src_R13b/cc.log
+		$ export LD_SH_DEBUG_LOG=/c/otp_src_R13b/ld.log
+	
+	This is really useful when things go wrong! :)
+
+#####################################################
+
+7) $ ./otp_build configure
+
+	I don't really remember if this step is required.
+	Do skip it and let me know how it goes. :)
+
+		*********************************************************************
+		**********************  APPLICATIONS DISABLED  **********************
+		*********************************************************************
+
+		crypto         : No usable OpenSSL found
+		ssh            : No usable OpenSSL found
+		ssl            : No usable OpenSSL found
+
+		*********************************************************************
+		*********************************************************************
+		**********************  APPLICATIONS INFORMATION  *******************
+		*********************************************************************
+
+		wx             : Can not link the wx driver, wx will NOT be useable
+
+		*********************************************************************
+
+	Onwards to building erl_interface!
+
+#####################################################	
+
+8)	I'm only interested in building erl_interface...
+		$ cd /c/otp_src_R13B/lib/erl_interface
+
+	I found this to be a typical configure command for an erlang application:
+		./configure --prefix=/usr/local  '--prefix=/usr/local' '--build=i686-pc-cygwin' 'build_alias=win32' '--host=win32' '--target=win32' 'CC=cc.sh' 'host_alias=win32' 'target_alias=win32' --cache-file=/dev/null --srcdir=/c/otp_src_R13B/lib/erl_interface/.
+
+	And this was what I cooked up after some failed attempts:
+		$ ./configure --prefix=/usr/local  '--prefix=/usr/local' '--build=i386-pc-mingw32' 'build_alias=mingw32' '--host=win32' '--target=win32' 'CC=cc.sh' 'host_alias=win32' 'target_alias=win32' --cache-file=/dev/null --srcdir=/c/otp_src_R13B/lib/erl_interface/.
+		...
+		checking for mixed cygwin and native VC++ environment... no
+		checking for mixed cygwin and native MinGW environment... yes             <-- Hurray!!
+		checking if we mix cygwin with any native compiler... yes
+		checking for native win32 threads... yes
+		checking for __declspec(thread) usability... no
+		configure: creating ./config.status
+		config.status: creating src/win32/Makefile
+		config.status: creating src/win32/eidefs.mk
+		config.status: creating src/win32/config.h
+	
+	All set! :)
+
+#####################################################	
+
+9) Onwards to make...
+
+	Because we are using MinGW's make, there's no cygpath magic to help out in
+	resolving the names... so this happens:
+		$ make
+		makefile:19: /c/otp_src_R13B/make/target.mk: No such file or directory
+		makefile:20: /c/otp_src_R13B/make//otp.mk: No such file or directory
+		makefile:32: /c/otp_src_R13B/make/otp_subdir.mk: No such file or directory
+		make: *** No rule to make target `/c/otp_src_R13B/make/otp_subdir.mk'.  Stop.
+	This fixes it:
+		$ export ERL_TOP=c:/otp_src_R13B
+		Note: keep in mind that this might lead to problems if the 
+				 "eval `./otp_build env_mingw32`" is called again because
+				 that command resets the PATH based on $ERL_TOP.
+	
+	Another error during make:
+		cc.sh -MD -O2 -Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline -fno-strict-aliasing -I. -I../include -Iconnect -Iencode -Idecode -Imisc -Iepmd -Iregistry -Iwin32  -g -DDEBUG -DWIN32_THREADS -c connect/ei_connect.c -o c:/otp_src_R13B/lib/erl_interface/obj.md.debug/win32/ei_connect.o
+		Assembler messages:
+		FATAL: can't create c:/otp_src_R13B/lib/erl_interface/obj.md.debug/win32/ei_connect.o: No such file or directory
+		make[2]: *** [c:/otp_src_R13B/lib/erl_interface/obj.md.debug/win32/ei_connect.o] Error 1
+	
+			Creating the obj.md.debug/win32/ folder manually and re-starting
+			the build succeeded so that something's off in the Makefile[.in] for
+			the MinGW build scenario.
+			And the culprit is:
+				ifeq ($USING_MINGW,yes)
+			that should be:
+				ifeq ($(USING_MINGW),yes)
+	
+	That did it.
+	At this point your build should have completed! :)
+	
+		$ objdump -p bin/win32/erl_call.exe | grep dll
+		DLL Name: KERNEL32.dll
+		DLL Name: msvcrt.dll
+		DLL Name: msvcrt.dll
+
+#####################################################	
+
+10) And now building a release...
+	
+	$ make release
+	...
+	/usr/bin/install -c -d c:/otp_src_R13B/release/win32/lib/erl_interface-3.6.1/include
+	process_begin: CreateProcess(NULL, /usr/bin/install -c -d c:/otp_src_R13B/release/win32/lib/erl_interface-3.6.1/include, ...) failed.
+	make (e=3): The system cannot find the path specified.
+	
+		- The cygpath magic is still missing so lets just patch src/win32/Makefile with:
+			INSTALL = c:/cygwin/bin/install -c
+			INSTALL_DIR = c:/cygwin/bin/install -c -d
+	
+	$ make release
+	...
+	ok!!
+	
+	$ ls /c/otp_src_R13B/release/win32/lib/erl_interface-3.6.1/
+	bin  include  lib  src
+	
+	$ ls /c/otp_src_R13B/release/win32/lib/erl_interface-3.6.1/lib/
+	libei_md.a  liberl_interface_md.a
+
+All set! :)
+
+#####################################################
+
+At this point we have two fancy looking libraries to link our code with! :)
+
+By the way... both library files have a _md suffix so using "-lerl_interface -lei" as
+described in the various tutorials won't work! :P
+
+The correct way to link against these libraries is using:
+		-L/c/otp_src_R13B/release/win32/lib/erl_interface-3.6.1/lib -lerl_interface_md -lei_md
+
+Enjoy! :)
+
+#####################################################

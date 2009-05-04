@@ -1,0 +1,184 @@
+#####################################################
+			Using MinGW to link against the erl_interface .lib libraries
+#####################################################
+
+NOTICE:
+	I haven't figured out how (or even if it is possible) to do this.
+	Scrool to the end of the document to see where I'm stuck.
+	Any help is welcome. ;)	
+
+#####################################################
+
+Current state of affairs:
+	$ make
+	g++ -g -Wall -Ienotify_c -Ienotify_cpp   -o executable/enotify erl_bridge/erl_bridge.a  erl_bridge/erl_bridge.a -lerl_interface -lei -Lexecutable -lwsock32
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	executable/liberl_interface.a(erl_marshal.o):(.text+0xf4): undefined reference to `__security_cookie'
+	executable/liberl_interface.a(erl_marshal.o):(.text+0x16b): undefined reference to `@__security_check_cookie@4'
+	executable/liberl_interface.a(erl_marshal.o):(.text+0x18b): undefined reference to `@__security_check_cookie@4'
+	executable/liberl_interface.a(erl_marshal.o):(.text+0x1f3): undefined reference to `@__security_check_cookie@4'
+	executable/liberl_interface.a(erl_marshal.o):(.text+0x22b): undefined reference to `@__security_check_cookie@4'
+	executable/liberl_interface.a(erl_marshal.o):(.text+0x269): undefined reference to `@__security_check_cookie@4'
+	executable/liberl_interface.a(erl_marshal.o):(.text+0x29d): more undefined references to `@__security_check_cookie@4' follow
+	executable/liberl_interface.a(erl_marshal.o):(.text+0xfe7): undefined reference to `__security_cookie'
+	executable/liberl_interface.a(erl_marshal.o):(.text+0x10bb): undefined reference to `@__security_check_cookie@4'
+	executable/liberl_interface.a(erl_marshal.o):(.text+0x13db): undefined reference to `__iob_func'
+	executable/liberl_interface.a(erl_marshal.o):(.text+0x1411): undefined reference to `__iob_func'
+	executable/liberl_interface.a(erl_error.o):(.text+0x13): undefined reference to `__iob_func'
+	executable/liberl_interface.a(erl_error.o):(.text+0x2b): undefined reference to `__iob_func'
+	executable/liberl_interface.a(erl_error.o):(.text+0x41): undefined reference to `__iob_func'
+	executable/liberl_interface.a(erl_error.o):(.text+0x5c): more undefined references to `__iob_func' follow
+	executable/libei.a(4530):(.text+0x1): undefined reference to `_tls_index'
+	executable/libei.a(4530):(.text+0x8): undefined reference to `_tls_array'
+	executable/libei.a(10535):(.text+0x299): undefined reference to `__iob_func'
+	collect2: ld returned 1 exit status
+	make: *** [executable/enotify] Error 1
+
+#####################################################
+
+Interesting possibility:
+	Converting libraries from .lib to .a
+
+Resources:
+	http://sebsauvage.net/python/mingw.html
+	http://irrlicht.sourceforge.net/phpBB2/viewtopic.php?p=87982#87982
+
+Both pexports and reimp are part of MinGW Utilities:
+	http://sourceforge.net/project/showfiles.php?group_id=2435&package_id=61599
+
+If this works there's no need to rebuild erl_interface from source.
+
+Pending investigation...
+
+#####################################################
+
+This is also noteworthy:
+	https://mailman.research.att.com/pipermail/graphviz-devel/2008/000532.html
+
+	"I found the solution for the libraries with MinGW. It was really simple!
+	All I needed to do was change from
+		gcc -L"c:\Program Files\Graphviz2.16\lib" ...
+	to
+		gcc -L"c:\Program Files\Graphviz2.16\bin" ...
+
+	Basically, MinGW is able to work out all the symbols its needs directly
+	from the DLLs. The shared libraries (.a, .lib, etc.) just cause
+	problems, because they contain static libraries with missing symbols,
+	but no information about where the missing symbols are to be found
+	(which is normal for static libraries, I believe).
+
+Something to keep in mind.
+
+#####################################################
+
+The undefined references to __security_cookie and friends can be explained by these:
+
+	http://support.microsoft.com/kb/894573
+		In Microsoft Visual Studio 2002, a new compiler switch that is named " /GS" has
+		been introduced to the Microsoft Visual C++ compiler. When the " /GS" switch is
+		set, the compiler injects buffer overrun detection code in the compiled code.
+	
+		By default, the Visual C++ compiler that is included with the Platform SDK
+		for Windows Server 2003 Service Pack 1 sets the "/GS" switch. When source
+		code is compiled, the compiler introduces references to code that insert a
+		security cookie on the stack on function entry. Then, the value of the security
+		cookie is checked on function exit. Additionally, most libraries in the Platform
+		SDK have been built with the "/GS" switch set. The libraries already reference
+		code that is required to provide the "/GS" switch enhanced protection at runtime.
+		
+	http://markmail.org/message/4gzc2midj7rsnpyc
+		If you're building with Visual Studio 2005 or above, the VC CRT includes all the
+		necessary symbols to support /GS (i.e. __security_check_cookie) such that
+		linking with bufferoverflowu.lib isn't required. In VS 2008 and Platform SDKs
+		6.0a and 6.1, bufferoverflowu.lib isn't even distributed anymore, so attempting
+		to build in this environment with Configure's output for 'VC-WIN64[IA]' will
+		fail, as it did for me. 
+	
+	http://social.msdn.microsoft.com/forums/en-US/vcgeneral/thread/256b4dca-04d7-4264-983a-f68cfa9ae7e0/
+		Actually I would do 3). :-) The VS2005 CRT contains every symbol that /GS needs. 
+		
+	http://msdn.microsoft.com/en-us/library/8dbf701c(vs.71).aspx
+
+erl_interface's libraries were built using VC++ hence the dependencies with
+the /GS (Buffer Security Check) functions.
+
+Also... here's some info on what the various versions of the libraries "are":
+	http://support.microsoft.com/kb/140584
+	Reusable Library            Switch    Library    Macro(s) Defined
+	----------------------------------------------------------------
+	Single Threaded             /ML       LIBC       (none)
+	Static MultiThread          /MT       LIBCMT     _MT
+	Dynamic Link (DLL)          /MD       MSVCRT     _MT and _DLL
+	Debug Single Threaded       /MLd      LIBCD      _DEBUG
+	Debug Static MultiThread    /MTd      LIBCMTD    _DEBUG and _MT
+	Debug Dynamic Link (DLL)    /MDd      MSVCRTD    _DEBUG, _MT, and _DLL
+
+The references to LIBCMT when we're trying to link to the erl_interface libraries
+tells us that they were build using the /MT flag.
+While my experience with building erl_interface with MinGW tells me that the
+created libraries might be "MD ones".
+
+Now... we have two options to build erl_interface ports:
+	1 - use VC
+			- having to manually include MinGW's headers?
+			- but having VC take care of the /GS stuff
+	2 - use MinGW
+			- find out and link the missing libraries
+				- linking uuid, oldnames, libcmt?
+					http://yeohhs.blogspot.com/2005/07/dev-c-and-mingw-warning-drectve.html
+				- installing a bufferoverflow*.lib library to solve
+				  the undefined references to /GS stuff
+
+				*** Progress!!! ***
+				I just found out that adding "-LC:/Progra~1/VS9.0/VC/lib" to the linking process is enough
+				to make the undefined references to __security_cookie and friends.
+				I'm guessing this is as something to do with the 
+					"The VS2005 CRT contains every symbol that /GS needs."
+				reported previously.
+				
+				Something related with going from VC to MinGW:
+				http://stackoverflow.com/questions/577006/makefiles-on-windows-with-g-linking-a-library/577031
+
+#####################################################
+
+New state of affairs:
+	$ make
+	g++ -g -Wall -Ienotify_c -Ienotify_cpp   -o executable/enotify erl_bridge/erl_bridge.a  erl_bridge/erl_bridge.a -lerl_
+	interface -lei -Lexecutable -lwsock32 -LC:/Progra~1/VS9.0/VC/lib
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	Warning: .drectve `/DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"uuid.lib" /DEFAULTLIB:"LIBCMT" /DEFAULTLIB:"OLDNAMES" ' unrecognized
+	C:/msys/1.0/mingw/bin/../lib/gcc/mingw32/3.4.5/../../../crt2.o:crt1.c:(.text+0x3): undefined reference to `_imp__atexit'
+	C:/msys/1.0/mingw/bin/../lib/gcc/mingw32/3.4.5/../../../crt2.o:crt1.c:(.text+0x13): undefined reference to `_imp___onexit'
+	C:/msys/1.0/mingw/bin/../lib/gcc/mingw32/3.4.5/../../../crt2.o:crt1.c:(.text+0xc7): undefined reference to `_imp___iob'
+	collect2: ld returned 1 exit status
+	make: *** [executable/enotify] Error 1
+
+#####################################################
+
+I'm stuck at this point.
+Any clues?
+
+#####################################################

@@ -1,0 +1,512 @@
+#####################################################
+								How to buid Erlang on Windows
+#####################################################
+
+This tutorial is the result of trying to install erlang on windows on a trial and lots of
+errors basis.
+My intent in writting this document is to supplement the README.win32 file to make
+it easier for anyone to build erlang.
+Enjoy! :)
+
+SOME STARTING NOTES:
+	- building erlang using MSYS/MinGW is not supported and will fail miserably (just get cygwin)
+		- the default compiler is MSVC (wrapped with the cc.sh shell)
+	- however, it is possible to build erl_interface using Cygwin and MinGW!	
+
+The current installation was done on 2009-05-01 with a fresh install* of:
+	- cygwin 1.5.25-15
+	- Visual C++ 2008 Express Edition
+	- jdk1.6.0_13
+
+*make sure you don't have mingw or msys binaries on the system PATH.
+
+#####################################################
+
+1) Get and install complete Cygwin (latest)
+	- Install the latest STABLE version or you might get into some nasty problems.
+	
+	- install packages:
+		- devel - gcc
+		- devel - make
+		- lib - openssl
+		       - openssl-dev
+				-> openssl still doesn't get detected in the "./otp_build configure" step
+				-> any clues?
+	 
+	Optionally... get ride of the cygdrive prefix (to use /c/... instead of /c/cygdrive/...)
+		- Add this line in the beginning of your ~/.bashrc file:
+			mount --change-cygdrive-prefix /
+		- simply running the command on the prompt would change the prefix but the
+		  PATH environment variable would still contain paths with the /cygdrive prefix
+		
+#####################################################
+
+2) Download Visual C++ 2008 Express Edition
+	-> My installation was done under:
+			c:/Program Files/VS9.0
+		Remember that if you copy paste something from this tutorial.
+
+#####################################################
+
+3) Get and install Sun's JDK 1.4.2
+	-> I had already installed jdk1.6.0_13
+		
+#####################################################
+
+4) Get and install NSIS 2.01 or higher (up to 2.30 tried and working)
+	-> Installed NSIS 2.44
+
+#####################################################
+
+5) Get and install OpenSSL 0.9.7c or higher
+	-> I installed it through cygwin's setup program (cygwin setup -> libs category)
+	    but it didn't got "included in the build" :|
+	
+	TODO!
+
+#####################################################
+		
+6) Get and unpack wxWidgets-2.8.9 or higher to /opt/local/pgm inside cygwin
+   - open /cygwin/opt/local/pgm/wxWidgets-2.8.9/build/msw/wx.dsw
+   - enable wxUSE_GLCANVAS and wxUSE_POSTSCRIPT in include/wx/msw/setup.h
+   - build all unicode release (and unicode debug) packages
+   - open /cygwin/opt/local/pgm/wxWidgets-2.8.9/contrib/build/stc/stc.dsw 
+   - build the unicode release (and unicode debug) packages
+   
+   Just following these steps doesn't seem to be enough. Or perhaps it doesn't work
+   the same way if we use Visual C++ 2008 Express Edition?
+   
+   TODO!
+
+#####################################################
+
+7) Get and unpack the erlang source distribution with Cygwin's tar.
+	-> Unpacked using 7zip to:
+		c:/otp_src_R13B
+		
+#####################################################
+	
+8) set ERL_TOP to where you unpacked the source distribution
+	$ export ERL_TOP=/c/otp_src_R13B
+	$ cd $ERL_TOP
+	
+#####################################################
+
+9) $ eval `./otp_build env_win32`
+	-> Done!
+		
+#####################################################
+
+10) Modify PATH and other environment variables so that VC is runnable from the shell
+	  I followed this suggestion:
+			http://www.cygwin.com/ml/cygwin/2008-05/msg00322.html
+	  And adapted the values to match Visual C++ 2008 SP1 Express Edition
+	  current bindings. Check C:\Program Files\VS9.0\Common7\Tools\vsvars32.bat
+	  to see if there are any changes on your machine.
+
+	- create a vsshell script and place it in the c:/cygwin/bin folder:
+		#!/bin/sh
+		export VSDIR="c:\Program Files\VS9.0"
+		export VCDIR="$VSDIR\VC"
+		export DevEnvDir="C:\Program Files\VS9.0\Common7\IDE"
+
+		WSDKDIR="c:\Program Files\Microsoft SDKs\Windows\v6.0A"
+		COMDIR="$VSDIR/Common7"
+		DOTNET="C:\WINDOWS\Microsoft.NET\Framework"
+
+		export INCLUDE= "$VCDIR\include;$WSDKDIR\include"
+		export LIB="$VCDIR\lib;$WSDKDIR\lib"
+		export LIBPATH= "$DOTNET\v3.5:$DOTNET\v2.0.50727:$VCDIR\lib"
+		# "$VCDIR\lib"
+
+		export PATH=\
+		"$COMDIR/ide:$VCDIR/bin:$COMDIR/Tools:$VCDIR/vcPackages:$DOTNET\v3.5:$DOTNET\v2.0.50727":$PATH
+		#"$COMDIR/ide:$VCDIR/bin:$COMDIR/Tools:$VCDIR/vcPackages":$PATH
+
+		echo "Say 'exit' to leave VS2008 shell and restore Cygwin environment."
+		/usr/bin/bash --rcfile ~/.vcvars9rc
+	
+	- create a ~/.vcvars9rc file containing:
+		PS1='VS2008: \W \$ '
+	
+	- enter the VS2008 shell to setup VC's environment:
+		$ vsshell
+		Say 'exit' to leave VS2008 shell and restore Cygwin environment.
+		VS2008: otp_src_R13B $
+		(from now all commands are assumed to be run inside this subshell)
+
+#####################################################
+
+11) Check if the PATH to VC's tools are correct
+
+		$ which cl
+		/c/otp_src_R13B/\Program Files\VS9.0\VC/bin/cl
+		$ which link
+		/c/otp_src_R13B/\Program Files\VS9.0\VC/bin/link
+		$ which mt
+		/c/otp_src_R13B/\Program Files\Microsoft SDKs\Windows\v6.0A/bin/mt
+		
+	- if any of the binaries is missing there's no point in going any further. Just go back
+	  to the previous step and fix the PATH!
+
+#####################################################
+
+12) Make sure that the directory specified by the TMP environment variable exists
+      and has write permissions (otherwise compilation will fail).
+
+		$ echo $TMP
+		/cygdrive/c/DOCUME~1/Davide/LOCALS~1/Temp
+		$ ls $TMP
+		ls: cannot access /cygdrive/c/DOCUME~1/Davide/LOCALS~1/Temp: No such file or directory
+	
+	I had this problem because I was removing the cygdrive prefix at the right time
+	and as you can see my TMP directory was still being pointed to by
+		/cygdrive/c/DOCUME~1/Davide/LOCALS~1/Temp
+	instead of the correct
+		/c/DOCUME~1/Davide/LOCALS~1/Temp
+	
+	Anyway... this is sure to work:
+			$ export TMP=/tmp
+
+#####################################################
+
+13) Set the CC_SH_DEBUG_LOG and LD_SH_DEBUG_LOG to get easier access to what
+	  cc.sh and ld.sh are doing during the build process.
+		$ export CC_SH_DEBUG_LOG=/c/otp_src_R13b/cc.log
+		$ export LD_SH_DEBUG_LOG=/c/otp_src_R13b/ld.log
+	
+	This is really useful when things go wrong on the next step! :)
+
+#####################################################
+
+14) $ ./otp_build configure
+	
+	Lots of issues to handle here!
+	Check config.log for errors as they come along! :)
+
+	- $ cc.sh
+	  tail: impossível abrir «+2» para leitura: No such file or directory
+	  ==> /tmp/link.exe.216.2 <==
+	  LINK : fatal error LNK1181: cannot open input file 'MSVCRT.LIB'
+	  
+		- Make sure you aren't using MSYS's tail..
+		- Workaround:
+			Replace all tail calls in the wrapper scripts (C:\otp_src_R13B\erts\etc\win32\cygwin_tools\vc\*.sh)
+			from this:
+				tail +2
+			to this:
+				tail -n +2
+			
+	- configure: error: C compiler cannot create executables \
+	  cannot open input file 'MSVCRT.LIB'
+		-> Problems with VC paths, just go back to step 10!
+				  
+	- configure: error: C compiler cannot create executables \
+		configure:1767: cc.sh    conftest.c  >&5
+		cl : Command line error D8003 : missing source filename
+		
+		- WARNING: again... this 
+		
+			$ cat cc.log
+			cc.sh teste.c
+			cl.exe -nologo -D__WIN32__ -DWIN32 -DWINDOWS -D_WIN32 -DNT -D_CRT_SECURE_NO_DEPRECATE -MD -c -FoC:/cygwin/tmp/tmpobj2552/teste.o
+			
+		Indeed... no source filename!
+		Change cc.sh:
+				echo cl.exe $params >>$CC_SH_DEBUG_LOG
+				fi
+			    eval cl.exe $params >$MSG_FILE 2>$ERR_FILE
+			to
+				echo cl.exe $SOURCES $params >>$CC_SH_DEBUG_LOG
+				fi
+				eval cl.exe $SOURCES $params >$MSG_FILE 2>$ERR_FILE
+	
+	- c1 : fatal error C1083: Cannot open compiler intermediate file: 'C:\cygwin\cygdrive\c\DOCUME~1\Davide\LOCALS~1\Temp\_CL_9edeeaedex': No such file or directory
+		"It seems VC is simply unable to create a folder."
+		http://social.msdn.microsoft.com/forums/en-US/vssetup/thread/ee1655a8-3e36-455b-9275-ac8676097e11
+		
+			$ echo $TMP
+			/cygdrive/c/DOCUME~1/Davide/LOCALS~1/Temp
+			$ export TMP=/tmp
+			$ cl teste.cpp
+			Microsoft (R) 32-bit C/C++ Optimizing Compiler Version 15.00.30729.01 for 80x86
+			Copyright (C) Microsoft Corporation.  All rights reserved.
+
+			teste.cpp
+			c:\Program Files\VS9.0\VC\include\xlocale(342) : warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+			Microsoft (R) Incremental Linker Version 9.00.30729.01
+			Copyright (C) Microsoft Corporation.  All rights reserved.
+
+			/out:teste.exe
+			teste.obj
+	
+	- "configure: error: C compiler cannot create executables" with no further details on config.log
+	  The problem is related with a simple "cc.sh conftest.c" failing.
+	  I copied the sourcecode to teste.c and played around with it.
+	
+		Initial fail:
+			$ cl.exe teste.c -nologo -D__WIN32__ -DWIN32 -DWINDOWS -D_WIN32 -DNT -D_CRT_SECURE_NO_DEPRECATE -MD -c -FoC:/cygwin/tmp/tmpobj3224/teste.o
+			teste.c
+			C:\otp_src_R13B\teste.c : fatal error C1083: Cannot open compiler generated file: 'C:/cygwin/tmp/tmpobj3224/teste.o': No such file or directory
+			
+		Not related with the /c VS c:...
+			$ cl.exe teste.c -nologo -D__WIN32__ -DWIN32 -DWINDOWS -D_WIN32 -DNT -D_CRT_SECURE_NO_DEPRECATE -MD -c -Fo/c/cygwin/tmp/tmpobj3224/teste.o
+			teste.c
+			C:\otp_src_R13B\teste.c : fatal error C1083: Cannot open compiler generated file: '/c/cygwin/tmp/tmpobj3224/teste.o': No such file or directory
+		
+		This works:
+			$ cl.exe teste.c -nologo -D__WIN32__ -DWIN32 -DWINDOWS -D_WIN32 -DNT -D_CRT_SECURE_NO_DEPRECATE -MD -c -Foc:/cygwin/tmp/teste.o
+			teste.c
+
+		This does not:
+			$ cl.exe teste.c -nologo -D__WIN32__ -DWIN32 -DWINDOWS -D_WIN32 -DNT -D_CRT_SECURE_NO_DEPRECATE -MD -c -Foc:/cygwin/tmp/asdasd/teste.o
+			teste.c
+			C:\otp_src_R13B\teste.c : fatal error C1083: Cannot open compiler generated file: 'c:/cygwin/tmp/asdasd/teste.o': No such file or directory
+
+		So that's 2 x "It seems VC is simply unable to create a folder."
+		
+		Let's check out if this is cygwin specific using the Visual Studio 2008
+		Command Prompt...
+			# Setting environment for using Microsoft Visual Studio 2008 x86 tools.
+			
+			C:\Program Files\VS9.0\VC>copy c:\otp_src_R13B\teste.c .
+					1 file(s) copied.
+			
+			C:\Program Files\VS9.0\VC>cl.exe teste.c -nologo -D__WIN32__ -DWIN32 -DWINDOWS -D_WIN32 -DNT -D_CRT_SECURE_NO_DEPRECATE -MD -c -Foc:/cygwin/tmp/asdasd/teste.o
+			teste.c
+			C:\Program Files\VS9.0\VC\teste.c : fatal error C1083: Cannot open compiler generated file: 'c:/cygwin/tmp/asdasd/teste.o': No such file or directory
+
+		Nop. It isn't cygwin specific... :|
+		
+		Research...
+			http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=111157
+			"This behavior is by design. The compiler & linker do not create intermediate
+			 directories for it's output files (this includes code listings, map files, object files,
+			 executables, etc.).
+			 
+			 I would suggest just letting the listing get created in the default directory (e.g.
+			 use /Fa or /FA without a relative path) or specifying a directory that already
+			 exists."
+		
+		That's a dead end.
+		Where is the /Fo parameter coming from? cc.sh obviously! :P
+		Lets hack it to create the needed directory before compiling.
+		Backtracing cc.sh:
+			- $output_flag <= "-c -FoC:/cygwin/tmp/?????/teste.o"
+			- $output_filename <= "/tmp/?????/teste.o"
+			- $TMPOBJDIR = ?????
+			Humm...
+				# A temporary object file location
+				TMPOBJDIR=/tmp/tmpobj$$
+				mkdir $TMPOBJDIR
+			wtf? 
+			It seems that after a failed build the directory gets deleted.
+				if [ $RES != 0 ]; then
+				rm -rf $TMPOBJDIR
+				exit $RES
+				fi
+			So... lets check if the directory exists immediately before trying to build.
+			Yup.
+		
+		It seems there's nothing wrong with cc.sh.
+		We'll move along to ld.sh taking care to change the end of cc.sh from
+			rm -rf $TMPOBJDIR
+		to 
+			#rm -rf $TMPOBJDIR
+		so that the produced .o file isn't deleted and we can reuse the last link command
+		that was logged to ld.log. ;)
+		
+			$ cat ld.log
+			ld.sh /tmp/tmpobj3740/teste.o
+			link.exe -debug -pdb:"a.pdb" -nologo -incremental:no -out:"a.exe" "C:/cygwin/tmp/tmpobj3740/teste.o" MSVCRT.LIB kernel32.lib advapi32.lib gdi32.lib user32.lib comctl32.lib comdlg32.lib shell32.lib
+		
+			Humm... correndo à pata este comando é produzindo um a.exe!
+			Logo a seguir à linkagem há mais um passo...
+				$ mt.exe -nologo -manifest a.exe.manifest -outputresource:a.exe\;1
+				bash: mt.exe: command not found
+			Que ao falhar apaga o resultado da linkagem!!! :P
+		
+		Portanto... onde está este mt.exe?
+			c:\Program Files\Microsoft SDKs\Windows\v6.0A\bin
+		Que no script vsshell que fizemos corresponde a adicionar à PATH:
+			$WSDKDIR/bin
+		
+		Voltar ao passo 10.
+	
+	- checking size of short... configure: error: cannot compute sizeof (short), 77
+	  See `config.log' for more details.
+	  configure: error: /bin/sh '/c/otp_src_R13B/lib/erl_interface/./configure' failed for erl_interface/.
+	  configure: error: /bin/sh '/c/otp_src_R13B/lib/configure' failed for lib
+	  
+		- It was /c/otp_src_R13B/lib/erl_interface/configure that failed so it should have a local config.log file
+		
+			configure:3084: checking size of short
+			configure:3403: cc.sh -o conftest.exe -g   conftest.c  >&5
+			configure:3406: $? = 0
+			configure:3408: ./conftest.exe
+			/c/otp_src_R13B/lib/erl_interface/./configure: line 3409: ./conftest.exe: No such file or directory
+			configure:3411: $? = 127
+			configure: program exited with status 127
+			configure: failed program was:
+			......
+			configure:3421: error: cannot compute sizeof (short), 77
+			See `config.log' for more details.
+		
+			I created the conftest.c file and did a:
+				cc.sh -o conftest.exe -g   conftest.c
+			The output was generated in a.exe instead of conftext.exe.
+			(Indeed hardcoding the configure file to run ./a.exe does let the configure
+			 script continue... to fail on the next test :))
+				checking size of short... 2
+				checking for int... yes
+				checking size of int... configure: error: cannot compute sizeof (int), 77
+			
+			The real issue seems to be with cc.sh not accepting the -o option.
+			And indeed I already had seen this while compiling teste.c (see previous issues).
+			
+			So lets get to it. The goal is to figure out how to get cl.exe to use the name we
+			specify in cc.sh using the -o option. :)
+				
+				teste.c listing:
+					#define PACKAGE_NAME ""
+					#define PACKAGE_TARNAME ""
+					#define PACKAGE_VERSION ""
+					#define PACKAGE_STRING ""
+					#define PACKAGE_BUGREPORT ""
+
+					int
+					main ()
+					{
+					  ;
+					  return 0;
+					}
+				
+				VS2008: otp_src_R13B $ cc.sh -o teste.exe teste.c
+				VS2008: otp_src_R13B $ ls teste.exe
+				ls: cannot access teste.exe: No such file or directory
+				VS2008: otp_src_R13B $ ls a.exe
+				a.exe
+			
+			In cc.sh (near line 134):
+				-o)
+					shift;
+					OUTFILE="$1";;
+			
+			The linker should be receiving the value of this variable.
+			Indeed... near the end the $out_spec variable gets set to "-o $OUTFILE" and
+			checking the LD_SH_DEBUG_LOG file we can see that the value is passed
+			correctly:
+				ld.sh /tmp/tmpobj216/teste.o -o teste.exe -lMSVCRT
+			
+			Moving on to ld.sh (near line 73):
+				-o)
+					shift
+					MPATH=`cygpath -m $1`;
+					OUTPUT_FILENAME="$MPATH";;
+			
+			$ cc.sh -o teste.exe teste.c
+			cygpath -m teste.exe
+			<nothing really>
+			
+			$ cc.sh -o ./teste.exe teste.c
+			cygpath -m teste.exe
+			<still nothing>
+			
+			$ cygpath -m /c/otp_src_R13B/teste.exe
+			C:/otp_src_R13B/teste.exe
+
+			Humm... a problem with cygpath in cygwin 1.7?
+			http://www.nabble.com/-1.7--cygpath-broken--td23053170.html
+			Yeap. :P
+			
+			This seems to work...
+				$ cygpath -ma teste.exe
+				C:/otp_src_R13B/teste.exe
+				
+			Changed line 75 of ld.sh to
+				MPATH=`cygpath -ma $1`;
+				
+				$ cc.sh -o teste.exe teste.c
+				$ ls teste.exe
+				teste.exe
+			
+			Let's try configure again. :)
+				checking size of short... 2
+				checking for int... yes
+				...
+				;)
+			
+			Onwards to the next issue.
+	
+	- configure: error: Perl is required to build the flex scanner!
+	  configure: error: /bin/sh '/c/otp_src_R13B/lib/megaco/./configure' failed for megaco/.
+	  configure: error: /bin/sh '/c/otp_src_R13B/lib/configure' failed for lib
+	  
+		- Humm...
+			VS2008: otp_src_R13B $ which perl
+			/usr/bin/perl
+			VS2008: otp_src_R13B $ cd lib/megaco/
+			VS2008: megaco $ ./configure
+			checking build system type... i686-pc-cygwin
+			...
+			checking for perl... perl
+			configure: creating ./config.status
+			config.status: creating src/flex/i686-pc-cygwin/Makefile
+			VS2008: megaco $ 
+		
+		A manual configure fixed it... :|
+
+#####################################################	
+	
+		*********************************************************************
+		**********************  APPLICATIONS DISABLED  **********************
+		*********************************************************************
+
+		crypto         : No usable OpenSSL found
+		ssh            : No usable OpenSSL found
+		ssl            : No usable OpenSSL found
+
+		*********************************************************************
+		*********************************************************************
+		**********************  APPLICATIONS INFORMATION  *******************
+		*********************************************************************
+
+		wx             : Can not link the wx driver, wx will NOT be useable
+
+		*********************************************************************
+
+	TODO!
+		OpenSSL was installed using cygwin's setup!
+		Why is it failing?
+
+#####################################################	
+
+15) $ ./otp_build boot -a
+
+		- Failed with:
+			make[5]: Leaving directory `/c/otp_src_R13B/erts/emulator/pcre'
+			make[4]: Leaving directory `/c/otp_src_R13B/erts/emulator/pcre'
+			cc.sh -O2 -I/c/otp_src_R13B/erts/win32   -D_WIN32_WINNT=0x0500 -DWINVER=0x0500 -D_USE_32BIT_TIME_T -DERTS_MIXED_CYGWIN
+			_VC -DSTATIC_ERLANG_DRIVER -DERTS_SMP -DHAVE_CONFIG_H  -DUSE_THREADS  -Iwin32/opt/smp -Ibeam -Isys/win32 -Isys/common
+			-Iwin32 -Izlib -Ipcre -Ihipe -I../include/internal -I../include/internal/win32 -c sys/win32/erl_main.c -o obj/win32/op
+			t/smp/erl_main.o
+			rc.sh -o obj/win32/opt/smp/beams.res  -I/c/otp_src_R13B/erts/etc/win32 win32/beams.rc
+			make[3]: *** [obj/win32/opt/smp/beams.res] Error 127
+			make[3]: Leaving directory `/c/otp_src_R13B/erts/emulator'
+			make[2]: *** [opt] Error 2
+			make[2]: Leaving directory `/c/otp_src_R13B/erts/emulator'
+			make[1]: *** [smp] Error 2
+			make[1]: Leaving directory `/c/otp_src_R13B/erts'
+			make: *** [emulator] Error 2
+			VS2008: otp_src_R13B $
+			
+	No clue...
+
+#####################################################	
+
+	TODO:
+		$ ./otp_build release -a
+		$ ./otp_build installer_win32
+		$ release/win32/otp_win32_<OTP version> /S
+
+#####################################################
