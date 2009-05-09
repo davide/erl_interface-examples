@@ -1,8 +1,3 @@
-# External stuff
-
-ERL_INTERFACE_DIR=c:/erl5.7.1/lib/erl_interface-3.6.1
-VC_DIR=c:/Progra~1/VS9.0/VC
-SRC_DIR=../src
 
 # Standard things
 
@@ -14,9 +9,11 @@ all:		targets
 
 # Subdirectories, in random order
 
-dir	:= $(SRC_DIR)/complex
+dir	:= $(EXAMPLES_DIR)/complex
 include		$(dir)/Rules.mk
-dir	:= $(SRC_DIR)/echo
+dir	:= $(EXAMPLES_DIR)/echo
+include		$(dir)/Rules.mk
+dir	:= $(EXAMPLES_DIR)/port
 include		$(dir)/Rules.mk
 
 # General directory independent rules

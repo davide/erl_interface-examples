@@ -1,10 +1,15 @@
 -module(echo).
--export([start/0, start/1, stop/0, init/1]).
+-export([start/1, stop/0, init/1]).
 -export([echo/1, call_port/2]).
 
-start() ->
-	start("../../MSVC/Debug/" ++ ?MODULE_STRING ++ ".exe").
-
+start(msvc) ->
+    start("msvc/Release/" ++ ?MODULE_STRING ++ ".exe");
+start(mingw) ->
+    start("mingw/" ++ ?MODULE_STRING ++ ".exe");
+start(mingw_vc) ->
+    start("mingw_vc/" ++ ?MODULE_STRING ++ ".exe");
+start(gcc) ->
+    start("gcc/" ++ ?MODULE_STRING);
 start(ExtPrg) ->
     spawn(?MODULE, init, [ExtPrg]).
 

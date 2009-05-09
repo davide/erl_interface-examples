@@ -1,3 +1,6 @@
+#ifndef ___AAAAA
+#define ___AAAAA
+
 #ifdef __WIN32__
 #include <io.h>
 #else
@@ -12,3 +15,5 @@ int write_cmd(byte *buf, int len);
 int read_exact(byte *buf, int len);
 
 int write_exact(byte *buf, int len);
+
+#endif

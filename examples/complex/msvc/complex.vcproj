@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="echo"
-	ProjectGUID="{1DB643FB-9177-4469-85E0-1C8431E24D6E}"
-	RootNamespace="teste"
+	Name="complex"
+	ProjectGUID="{AFDF4E58-785F-413E-B0BF-A5C03A46748B}"
+	RootNamespace="complex"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -18,7 +18,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
@@ -62,14 +62,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				UseLibraryDependencyInputs="true"
-				AdditionalOptions="&#x0D;&#x0A;"
+				AdditionalOptions="/NODEFAULTLIB:libcmt.lib"
 				AdditionalDependencies="erl_interface.lib ei.lib wsock32.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="C:\erl5.7.1\lib\erl_interface-3.6.1\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
-				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -96,7 +94,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
@@ -141,8 +139,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				UseLibraryDependencyInputs="false"
-				AdditionalOptions="/NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:libcmtd.lib /NODEFAULTLIB:msvcrtd.lib"
+				AdditionalOptions="/NODEFAULTLIB:libcmt.lib"
 				AdditionalDependencies="erl_interface.lib ei.lib wsock32.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="C:\erl5.7.1\lib\erl_interface-3.6.1\lib"
@@ -184,15 +181,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\src\echo\echo.c"
+				RelativePath="..\complex.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\echo\erl_comm.c"
+				RelativePath="..\main.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\echo\main.c"
+				RelativePath="..\erl_comm.c"
 				>
 			</File>
 		</Filter>
@@ -202,11 +199,11 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\src\echo\echo.h"
+				RelativePath="..\complex.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\echo\erl_comm.h"
+				RelativePath="..\erl_comm.h"
 				>
 			</File>
 		</Filter>

@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
 	ETERM *tuplep;
 	ETERM *fnp;
 	ETERM *args;
-	byte buf[100];
+	byte buf[1024];
 	const char* func_name;
 
 	erl_init(NULL, 0);
