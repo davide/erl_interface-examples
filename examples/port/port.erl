@@ -42,10 +42,11 @@ call_port(Msg) ->
 init(ExtPrg) ->
     register(?MODULE, self()),
     process_flag(trap_exit, true),
+    Timeout = 5000,
     Port = open_port({spawn, ExtPrg}, [{packet, 2}, binary, exit_status]),
-    loop(Port).
+    loop(Port, Timeout).
 
-loop(Port) ->
+loop(Port, Timeout) ->
     receive
     {call, Caller, Msg} ->
         io:format("Calling port with ~p~n", [Msg]),
@@ -61,8 +62,11 @@ loop(Port) ->
             exit({port_terminated, Status});
         {'EXIT', Port, Reason} ->
             exit(Reason)
+	after Timeout ->
+		Caller ! {timeout, Timeout},
+		loop(Port, Timeout)
         end,
-        loop(Port);
+        loop(Port, Timeout);
     stop ->
         erlang:port_close(Port),
         exit(normal)
