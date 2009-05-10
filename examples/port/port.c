@@ -4,7 +4,6 @@
 #include <string.h>
 
 #ifdef __WIN32__
-#include <windows.h>
 #include <io.h>
 #include <fcntl.h>
 #else
@@ -54,8 +53,8 @@ int main() {
   /* Attention Windows programmers: you need to explicitly set
    * mode of stdin/stdout to binary or else the port program won't work
    */
-  setmode(fileno(stdout), O_BINARY);
-  setmode(fileno(stdin), O_BINARY);
+  _setmode(_fileno(stdout), O_BINARY);
+  _setmode(_fileno(stdin), O_BINARY);
   #endif
 
   if ((buf = (byte *) malloc(size)) == NULL) 
