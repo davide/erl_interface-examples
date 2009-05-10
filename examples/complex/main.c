@@ -2,13 +2,26 @@
 #include "ei.h"
 #include "erl_comm.h"
 #include "complex.h"
+#ifdef __WIN32__
+#include <fcntl.h>
+#endif
 
 int main() {
   ETERM *tuplep, *intp;
   ETERM *fnp, *argp;
   int res;
   byte buf[100];
-  long allocated, freed;
+
+#ifdef __WIN32__
+  /* Attention Windows programmers: you need [to pay Serge Aleynikov a
+   * beer because he's the one who figured out how to get this to work
+   * on windows :)] explicitly set mode of stdin/stdout to binary or
+   * else the port program won't work.
+   */
+  _setmode(_fileno(stdout), O_BINARY);
+  _setmode(_fileno(stdin), O_BINARY);
+#endif
+
 
   erl_init(NULL, 0);
 
