@@ -49,7 +49,7 @@ int main() {
   double    x, y, z;
   ei_x_buff result;
 
-  #ifdef _WIN32
+  #ifdef __WIN32__
   /* Attention Windows programmers: you need to explicitly set
    * mode of stdin/stdout to binary or else the port program won't work
    */
