@@ -3,6 +3,7 @@
 include ../BuildConfig.mk
 
 TARGET=gcc
+BIN_EXT=
 
 ERL_INTERFACE_LIBRARY_BINDING=-L$(ERL_INTERFACE_DIR)/lib -lerl_interface -lei
 
@@ -10,7 +11,7 @@ ERL_INTERFACE_LIBRARY_BINDING=-L$(ERL_INTERFACE_DIR)/lib -lerl_interface -lei
 #
 CF_ALL          = -g -Wall
 LF_ALL          = 
-LL_ALL          =
+LL_ALL          = -lpthread
 
 ### Build tools
 # 

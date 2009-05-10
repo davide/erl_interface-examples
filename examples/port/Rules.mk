@@ -18,7 +18,7 @@ OBJS_$(d)	:= $(d)/port.o
 DEPS_$(d)	:= $(OBJS_$(d):%.o=%.d)
 
 
-TGTS_$(d)	:= $(d)/$(TARGET)/port.exe
+TGTS_$(d)	:= $(d)/$(TARGET)/port$(BIN_EXT)
 ERL_TGTS_$(d)	:= $(d)/port.beam
 
 CLEAN		:= $(CLEAN) $(OBJS_$(d)) $(DEPS_$(d)) \
