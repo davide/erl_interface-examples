@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "complex", "..\..\examples\c
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "port", "..\..\examples\port\msvc\port.vcproj", "{1DC56408-535A-4388-88CF-B9562D093D36}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "string_echo", "..\..\examples\string_echo\msvc\string_echo.vcproj", "{195745B1-466B-4BBC-9508-DCB2BC0969B7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -25,6 +27,10 @@ Global
 		{1DC56408-535A-4388-88CF-B9562D093D36}.Debug|Win32.Build.0 = Debug|Win32
 		{1DC56408-535A-4388-88CF-B9562D093D36}.Release|Win32.ActiveCfg = Release|Win32
 		{1DC56408-535A-4388-88CF-B9562D093D36}.Release|Win32.Build.0 = Release|Win32
+		{195745B1-466B-4BBC-9508-DCB2BC0969B7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{195745B1-466B-4BBC-9508-DCB2BC0969B7}.Debug|Win32.Build.0 = Debug|Win32
+		{195745B1-466B-4BBC-9508-DCB2BC0969B7}.Release|Win32.ActiveCfg = Release|Win32
+		{195745B1-466B-4BBC-9508-DCB2BC0969B7}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -15,6 +15,8 @@ dir	:= $(EXAMPLES_DIR)/echo
 include		$(dir)/Rules.mk
 dir	:= $(EXAMPLES_DIR)/port
 include		$(dir)/Rules.mk
+dir	:= $(EXAMPLES_DIR)/string_echo
+include		$(dir)/Rules.mk
 
 # General directory independent rules
 
