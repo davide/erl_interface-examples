@@ -1,0 +1,25 @@
+#!/bin/sh
+export VSDIR="c:/MSVC9.0"
+export VCDIR="$VSDIR/VC"
+export DevEnvDir="$VSDIR/Common7/IDE"
+
+# Reminder: fix the short-name for "c:/Program Files/Microsoft\ SDKs/Windows/v6.0A"
+WSDKDIR="c:/Progra~1/Micros~2/Windows/v6.0A"
+COMDIR="$VSDIR/Common7"
+DOTNET="c:/WINDOWS/Microsoft.NET/Framework"
+
+export INCLUDE="$VCDIR/include;$WSDKDIR/include"
+export LIB="$VCDIR/lib;$WSDKDIR/lib"
+export LIBPATH="$DOTNET/v3.5:$DOTNET/v2.0.50727:$VCDIR/lib"
+
+PATH="`cygpath $COMDIR`/ide:$PATH"
+PATH="`cygpath $VCDIR`/Tools:$PATH"
+PATH="`cygpath $VCDIR`/bin:$PATH"
+PATH="`cygpath $VCDIR`/vcPackages:$PATH"
+PATH="`cygpath $WSDKDIR`/bin:$PATH"
+PATH="`cygpath $DOTNET`/v3.5:$PATH"
+PATH="`cygpath $DOTNET`/v2.0.50727:$PATH"
+export PATH
+
+echo "Say 'exit' to leave VC2008 shell and restore Cygwin environment."
+/usr/bin/bash --rcfile ~/.vcvars9rc
