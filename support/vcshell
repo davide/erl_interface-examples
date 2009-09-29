@@ -1,25 +1,38 @@
 #!/bin/sh
-export VSDIR="c:/MSVC9.0"
-export VCDIR="$VSDIR/VC"
-export DevEnvDir="$VSDIR/Common7/IDE"
 
-# Reminder: fix the short-name for "c:/Program Files/Microsoft\ SDKs/Windows/v6.0A"
-WSDKDIR="c:/Progra~1/Micros~2/Windows/v6.0A"
-COMDIR="$VSDIR/Common7"
-DOTNET="c:/WINDOWS/Microsoft.NET/Framework"
+# This file mimics the environment setup done by
+# C:\MSVC9.0\Common7\Tools\vsvars32.bat
 
-export INCLUDE="$VCDIR/include;$WSDKDIR/include"
-export LIB="$VCDIR/lib;$WSDKDIR/lib"
-export LIBPATH="$DOTNET/v3.5:$DOTNET/v2.0.50727:$VCDIR/lib"
+# Change these to match your installation paths
+WIN_VCROOT="c:/MSVC9.0"
+WIN_VCDIR="$WIN_VCROOT/VC"
+WIN_WSDKDIR="c:\\Program Files\\Microsoft SDKs\\Windows\\v6.0A"
+WIN_DOTNET="c:\\WINDOWS\\Microsoft.NET\\Framework"
 
-PATH="`cygpath $COMDIR`/ide:$PATH"
-PATH="`cygpath $VCDIR`/Tools:$PATH"
-PATH="`cygpath $VCDIR`/bin:$PATH"
-PATH="`cygpath $VCDIR`/vcPackages:$PATH"
-PATH="`cygpath $WSDKDIR`/bin:$PATH"
-PATH="`cygpath $DOTNET`/v3.5:$PATH"
-PATH="`cygpath $DOTNET`/v2.0.50727:$PATH"
-export PATH
+# Lib and INCLUDE should be Windows'ish
+# Note that semicolon (;) is used to separate Windows style paths but
+# colon (:) to separate Cygwin ditto!
 
-echo "Say 'exit' to leave VC2008 shell and restore Cygwin environment."
+INCLUDE="$WIN_VCDIR\\include;$WIN_WSDKDIR\\include"
+LIB="$WIN_VCDIR\\lib;$WIN_WSDKDIR\\lib"
+LIBPATH="$WIN_DOTNET\\v3.5;$WIN_DOTNET\\v2.0.50727;$WIN_VCDIR\\lib"
+
+# The PATH variable should be Cygwin'ish
+VCROOT=`cygpath "$WIN_VCROOT"`
+VCDIR="$VCROOT/VC"
+COMDIR="$VCROOT/Common7"
+WSDKDIR=`cygpath "$WIN_WSDKDIR"`
+DOTNET=`cygpath "$WIN_DOTNET"`
+
+PATH="$WSDKDIR/bin:$PATH"
+PATH="$COMDIR/IDE:$PATH"
+PATH="$VCDIR/bin:$PATH"
+PATH="$COMDIR/Tools:$PATH"
+PATH="$COMDIR/Tools/bin:$PATH"
+PATH="$DOTNET/v3.5:$DOTNET/v2.0.50727:$PATH"
+PATH="$VCDIR/vcPackages:$PATH"
+
+export INCLUDE LIB LIBPATH PATH
+
+echo "Say 'exit' to leave the VC2008 shell and restore Cygwin environment."
 /usr/bin/bash --rcfile ~/.vcvars9rc
