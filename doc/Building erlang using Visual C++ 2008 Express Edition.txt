@@ -16,290 +16,11 @@ SOME CONTEXT:
 By the way, have I mentioned?
 	"Make sure you don't have mingw or msys binaries on the system PATH!"
 
-#####################################################
-
-1) Get and install complete Cygwin (latest)
-	- Install the latest *STABLE* version
-		- experimental versions will get you into lots of trouble
-		- http://www.cygwin.com/
-	
-	- You can check the version you have installed using:
-		$ uname -srv
-		CYGWIN_NT-5.1 1.5.25(0.156/4/2) 2008-06-12 19:34
-	
-	- install make using cygwin's setup:
-		- package -> devel -> make
-	
-	- Optionally... get rid of the cygdrive prefix (to use /c/... instead of
-	  /c/cygdrive/...) by adding the following line:
-	    mount --change-cygdrive-prefix /
-	  to the beginning of your ~/.bashrc file.
-
-	  Simply running the command on the prompt would change the prefix
-	  but the PATH environment variable would still contain paths with the
-	  /cygdrive prefix.
+Let me know (nesrait@gmail.com) if you find errors or have any
+suggestions that might improve this tutorial.
 
 #####################################################
-
-2) Download Visual C++ 2008 Express Edition
-	My installation was done under:
-		c:/MSVC9.0
-	Remember that if you copy paste something from this tutorial.
-
-VC++ 2008 Express Edition doesn't include the Message Compiler (mc.exe)
-which will be needed later in the build process.
-	Details:
-		http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=374833
-		http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=477064
-		
-Get a copy of this file of a Windows SDK and place it in:
-	c:\MSVC9.0\VC\bin
-
-Question: is this file freely distributable? If so I could add it to the repo.
-
-Possible workaround:
-	http://bugs.mysql.com/bug.php?id=40280
-
-#####################################################
-
-3) Get and install Sun's Java SE Development Kit 6u16
-
-	- Add the bin dir to the PATH environment variable in windows
-	  or in some cygwin "boot script"
-
-		$ export PATH="$PATH:/c/Progra~1/Java/jdk1.6.0_16/bin"
-
-#####################################################
-
-4) Install "Win32 OpenSSL v0.9.8k"
-	-> NOT "Win32 OpenSSL v0.9.8k Light"
-
-	- Get the installer here:
-		http://www.slproweb.com/products/Win32OpenSSL.html
-	
-	- Take notice of the install dir to use on step 14.
-
-#####################################################
-
-5) Get and unpack the erlang source distribution with Cygwin's tar.
-	-> Unpacked using 7zip to:
-		c:/otp_src_R13B02-1
-		
-#####################################################
-	
-6) set ERL_TOP to where you unpacked the source distribution
-	$ export ERL_TOP=/c/otp_src_R13B02-1
-	$ cd $ERL_TOP
-	
-#####################################################
-
-7) Setup the environment for building under windows:
-
-		$ eval `./otp_build env_win32`
-		
-#####################################################
-
-8) Create a script to modify the PATH and other environment variables
-     so that the VC compiler is accessible from the shell.
-	
-	- I followed this suggestion:
-			http://www.cygwin.com/ml/cygwin/2008-05/msg00322.html
-	  And adapted the values to match Visual C++ 2008 SP1 Express Edition
-	  current bindings. Check C:\MSVC9.0\Common7\Tools\vsvars32.bat
-	  to see if there are any changes on your machine.
-
-	- create a vcshell script and place it in the c:/cygwin/bin folder:
-		#!/bin/sh
-		export VSDIR="c:/MSVC9.0"
-		export VCDIR="$VSDIR/VC"
-		export DevEnvDir="$VSDIR/Common7/IDE"
-
-		# Reminder: fix the short-name for "c:/Program Files/Microsoft\ SDKs/Windows/v6.0A"
-		WSDKDIR="c:/Progra~1/Micros~2/Windows/v6.0A"
-		COMDIR="$VSDIR/Common7"
-		DOTNET="c:/WINDOWS/Microsoft.NET/Framework"
-
-		export INCLUDE="$VCDIR/include;$WSDKDIR/include"
-		export LIB="$VCDIR/lib;$WSDKDIR/lib"
-		export LIBPATH="$DOTNET/v3.5:$DOTNET/v2.0.50727:$VCDIR/lib"
-
-		PATH="`cygpath $COMDIR`/ide:$PATH"
-		PATH="`cygpath $VCDIR`/Tools:$PATH"
-		PATH="`cygpath $VCDIR`/bin:$PATH"
-		PATH="`cygpath $VCDIR`/vcPackages:$PATH"
-		PATH="`cygpath $WSDKDIR`/bin:$PATH"
-		PATH="`cygpath $DOTNET`/v3.5:$PATH"
-		PATH="`cygpath $DOTNET`/v2.0.50727:$PATH"
-		export PATH
-
-		echo "Say 'exit' to leave VC2008 shell and restore Cygwin environment."
-		/usr/bin/bash --rcfile ~/.vcvars9rc
-
-	- create a ~/.vcvars9rc file containing:
-		PS1='VC2008: \W \$ '
-
-#####################################################
-
-9) Enter the VC2008 shell
-
-		$ vcshell
-		Say 'exit' to leave VC2008 shell and restore Cygwin environment.
-		VC2008: otp_src_R13B02-1 $
-	
-	 (from now on all commands are assumed to be run inside this subshell)
-
-#####################################################
-
-10) Check if the PATH to VC's tools are correct
-
-		$ which cl
-		/c/MSVC9.0/VC/bin/cl
-		
-		$ which link
-		/c/MSVC9.0/VC/bin/link
-		
-		$ which mt
-		/c/Progra~1/Micros~2/Windows/v6.0A/bin/mt
-		
-		$ which mc
-		/c/MSVC9.0/VC/bin/mc
-		(check step 2 for this last one)
-		
-	- if any of the binaries is missing there's no point in going any further.
-	  Just go back to the previous step and fix the PATH!
-
-#####################################################
-
-11) Check if the java compiler can be found (complement to step 3)
-		
-		$ which javac
-		/c/PROGRA~1/Java/JDK16~1.0_1/bin/javac
-
-#####################################################
-
-12) Make sure that the directory specified by the TMP environment variable
-     exists and has write permissions (otherwise compilation will fail).
-
-		$ echo $TMP
-		/c/DOCUME~1/Monkey/LOCALS~1/Temp
-		$ touch $TMP/test && ls $TMP/test
-		/c/DOCUME~1/Monkey/LOCALS~1/Temp/test
-	
-	- if case that fails this is sure to work:
-		$ export TMP=/tmp
-
-#####################################################
-
-13) Set log files for the various scripts that run during the build process:
-		$ export CC_SH_DEBUG_LOG=/c/otp_src_R13B02-1/cc.log
-		$ export LD_SH_DEBUG_LOG=/c/otp_src_R13B02-1/ld.log
-		$ export RC_SH_DEBUG_LOG=/c/otp_src_R13B02-1/rc.log
-		$ export MD_SH_DEBUG_LOG=/c/otp_src_R13B02-1/md.log
-		$ export MC_SH_DEBUG_LOG=/c/otp_src_R13B02-1/mc.log
-	
-	This is really useful when things go wrong! :)
-
-#####################################################
-
-14) Run the configure script
-
-	$ ./otp_build configure [--with-ssl=<OpenSSL directory>]
-
-#####################################################	
-
-15) Build a complete OTP system
-
-		$ ./otp_build boot -a
-
-	- This uses the bootstrap directory (shipped with the source,
-	  $ERL_TOP/bootstrap) to build a complete OTP system. It first
-	  builds an emulator and sets up a minimal OTP system under
-	  $ERL_TOP/bootstrap, then starts to compile the different OTP
-	  compilers to make the $ERL_TOP/bootstrap system potent enough
-	  to be able to compile all Erlang code in OTP. Then, all Erlang and
-	  C code under $ERL_TOP/lib is built using the bootstrap system,
-	  giving a complete OTP system (although not installed). When this
-	  is done, one can run Erlang from within the source tree, just type
-	  $ERL_TOP/bin/erl and you should have a prompt. If you omit the
-	  -a flag, you'll get a smaller system, that might be useful during
-	  development.
-
-#####################################################	
-
-16) Build an erlang release
-
-		$ ./otp_build release -a
-
-	- Builds a commercial release tree from the source tree, default is
-	  to put it in $ERL_TOP/release/win32, you can give any directory 
-	  as parameter (Cygwin style), but it doesn't really matter if you're
-	  going to build a self extracting installer too. You could of course 
-	  build release to the final directory and then run ./Install.exe 
-	  standing in the directory where the release was put, that will 
-	  create a fully functional OTP installation.
-
-#####################################################	
-
-17) Create the installer
-
-	- Get and install NSIS 2.45
-		- http://nsis.sourceforge.net/Download
-
-	- Add makensis.exe to the $PATH
-	
-		$ export PATH="/c/Progra~1/NSIS:$PATH"
-
-	- Create the self extracting installer executable
-
-		$ ./otp_build installer_win32
-		
-	The executable otp_win32_<OTP version>.exe will be placed in
-	the top directory of the release created in the previous step.
-	If no release directory is specified, the release is expected to
-	have been built to $ERL_TOP/release/win32, which also will be
-	the place where the installer executable will be placed. If you
-	specified some other directory for the release (i.e. ./otp_build
-	release -a /tmp/erl_release), you're expected to give the same
-	parameter here, (i.e. ./otp_build installer_win32 /tmp/erl_release).
-
-	You need to have a full NSIS installation and makensis.exe in your
-	path for this to work of course. Once you have created the installer,
-	you can run it to install Erlang/OTP in the regular way, just run the
-	executable and follow the steps in the installation wizard. To get all
-	default settings in the installation without any questions asked, you
-	run the executable with the parameter "/S" (capital S). like in:
-		------------------------------------------------------
-		$ cd $ERL_TOP
-		$ release/win32/otp_win32_R9C /S
-		.....
-		------------------------------------------------------
-	- and after a while Erlang will have been installed in 
-	C:\Program Files\erl5.5, with shortcuts in the menu etc.
-
-	*NOTE* Beginning with R9C, the Windows installer does *not* add Erlang
-	to the system wide path. If one wants to have Erlang in the path, one
-	has to add it by hand.
-
-	The necessary setup of an Erlang installation is actually done by the
-	program Install.exe, which resides in the release top. That program
-	creates ".ini-files" and copies the correct boot scripts. If one has
-	the correct directory tree (like after a ./otp_build release -a), only
-	the running of Install.exe is necessary to get a fully functional
-	OTP. What the self extracting installer adds is (of course) the
-	possibility to distribute the binary easily, together with adding
-	shortcuts to the Windows start menu. There is also some adding of
-	entries in the registry, to associate .erl and .beam files with Erlang
-	and get nifty icons, but that's not something you'll really need to
-	run Erlang. The registry is also used to store uninstall information,
-	but if one has not used the self extracting installer, one cannot
-	(need not) do any uninstall, one just scratches the release directory
-	and everything is gone. Erlang/OTP R9C does not *need* to put anything
-	in the Windows registry at all, and does not if you don't use the self
-	extracting installer. In other words the installer is pure cosmetics
-	:-)
-
-#####################################################	
-                                      BUGS & PATCHES!
+					BUGS & PATCHES - read and apply as needed!
 #####################################################	
 
 $ERL_TOP/erts/configure.in:
@@ -379,104 +100,451 @@ with line 33 of $ERL_TOP/erts/etc/win32/cygwin_tools/vc/rc.sh:
 	    RCC=$p/rc.exe
 	fi
 It seems the second one needs some escaping: \"resource compiler\".
-		
-#####################################################	
-                                 Pending Issues
-#####################################################	
+
+---------------------------------
+
+It seems that gs looks up the wish binary in its priv dir and fallbacks
+to a lookup in the system path.
+Having the build fail just because it doesn't find a binaries/win32.tar.gz file
+imposes an unnecessary restriction (not present in the actual application).
+
+$ERL_TOP/lib/gs/configure.in has this:
+	AC_SUBST(TCL_TAR)
+
+	AC_MSG_CHECKING(for prebuilt tcl/tk in tcl/binaries/$system_type.tar.gz)
+	if test -f "tcl/binaries/$system_type.tar.gz" ; then
+		TCL_TAR="binaries/$system_type.tar.gz"
+		AC_MSG_RESULT(found)
+	else
+		TCL_TAR=""
+		AC_MSG_RESULT(not found, using PATH at runtime)
+	fi
+
+When the $system_type.tar.gz file is missing TCL_TAR="" as expected.
+
+The bug lies in
+$ERL_TOP/lib/gs/tcl/Makefile.in:36
+ifeq ($(TARGET),win32)
+TCL_TAR = binaries/win32.tar.gz
+else
+TCL_TAR = @TCL_TAR@
+endif
+
+Where the result of the test for the file's presence is simply ignored and
+TCL_TAR is set to "binaries/win32.tar.gz" thus enabling some invalid
+operations on non-existing files:
+
+	ifeq ($(TCL_TAR),)
+	debug opt:
+	else
+	debug opt:
+		gzip -dc $(TCL_TAR) | (cd ../priv && tar -xf -)
+	endif
+	...
+	release_spec:
+		$(INSTALL_DIR) $(RELSYSDIR)/priv
+		$(INSTALL_DATA) $(TCL_FILES) $(EXTRA_FILES) $(RELSYSDIR)/priv
+	ifneq ($(TCL_TAR),)
+		gzip -dc $(TCL_TAR) | (cd $(RELSYSDIR)/priv && tar -xf -)
+	endif
+
+Only overriding the TCL_TAR if it was defined should solve the problem.
+$ERL_TOP/lib/gs/tcl/Makefile.in:36
+TCL_TAR = @TCL_TAR@
+ifneq ($(TCL_TAR),)
+ifeq ($(TARGET),win32)
+TCL_TAR = binaries/win32.tar.gz
+endif
+endif
+
+---------------------------------
+
+Enabling the detection of a wxWidgets installation under c:\Program Files.
+
+$ERL_TOP/lib/wx/configure.in:292
+AC_MSG_CHECKING(for WxWidgets in standard locations)
++PROGRAM_FILES_SHORTNAME=`cygpath -s -m "c:\\Program Files"`
++WXWIN="$PROGRAM_FILES_SHORTNAME\\wxWidgets-2.8.*"
+CWXWIN=`cygpath $WXWIN 2>/dev/null`
+for dir in $CWXWIN /opt/local/pgm/wxMSW-2.8.*; do
+
+$ERL_TOP/lib/wx/configure~4565
+echo $ECHO_N "checking for WxWidgets in standard locations... $ECHO_C" >&6
++PROGRAM_FILES_SHORTNAME=`cygpath -s -m "c:\\Program Files"`
++WXWIN="$PROGRAM_FILES_SHORTNAME\\wxWidgets-2.8.*"
+CWXWIN=`cygpath $WXWIN 2>/dev/null`
+for dir in $CWXWIN /opt/local/pgm/wxMSW-2.8.*; do
+
+---------------------------------
+
+Mandatory patches for building wxWidgets with VC++ Express 2008:
+
+cc.sh bug: files with the .cc extension are rewritten on compile.
+$ERL_TOP/erts/etc/win32/cygwin_tools/vc/cc.sh:224:
+-o=`echo $x | sed 's,.*/,,' | sed 's,\.cp*$,.o,'`
++o=`echo $x | sed 's,.*/,,' | sed 's,\.cp*$,.o,' | sed 's,\.cc$,.o,'`
+
+Dirty fix! I believe the actual fix involves running autoconf again
+to recreate configure from configure.in - with a version of autoconf
+that includes this patch:
+	http://www.mail-archive.com/autoconf-patches@gnu.org/msg00826.html
+
+Anyway... this works:
+$ERL_TOP/lib/wx/configure~2314
+-   'void exit (int);'
++   'void exit (int);' \
++   ''
+$ERL_TOP/lib/wx/configure~2676
+-   'void exit (int);'
++   'void exit (int);' \
++   ''
+
+#####################################################
+                                      Building erlang
+#####################################################
+
+1) Get and install complete Cygwin (latest)
+	- Install the latest *STABLE* version
+		- experimental versions will get you into lots of trouble
+		- http://www.cygwin.com/
 	
-	$ ./otp_build boot -a
+	- You can check the version you have installed using:
+		$ uname -srv
+		CYGWIN_NT-5.1 1.5.25(0.156/4/2) 2008-06-12 19:34
 	
-	- Error in the gs application:
+	- install make using cygwin's setup:
+		- package -> devel -> make
 	
-		erlc -W  +debug_info +warn_obsolete_guard -o../ebin gse.erl
-		erl -pa ../ebin -s gs_make -s erlang halt -noshell
-		erlc -W  +debug_info +warn_obsolete_guard -o../ebin gstk_generic.erl
-		c:/OTP_SR~1/lib/gs/src/gstk_generic.erl:327: Warning: a term is constructed, but
-		 never used
-		c:/OTP_SR~1/lib/gs/src/gstk_generic.erl:417: Warning: regexp:gsub/3: the regexp
-		module is deprecated (will be removed in R15A); use the re module instead
-		sed -e 's;%VSN%;1.5.10;' gs.app.src > ../ebin/gs.app
-		sed -e 's;%VSN%;1.5.10;' gs.appup.src > ../ebin/gs.appup
-		make[3]: Leaving directory `/c/otp_src_R13B02-1/lib/gs/src'
-		make[3]: Entering directory `/c/otp_src_R13B02-1/lib/gs/tcl'
-		make -f win32/Makefile TYPE=opt
-		make[4]: Entering directory `/c/otp_src_R13B02-1/lib/gs/tcl'
-		gzip -dc binaries/win32.tar.gz | (cd ../priv && tar -xf -)
-		gzip: binaries/win32.tar.gz: No such file or directory
-		tar: This does not look like a tar archive
-		tar: Exiting with failure status due to previous errors
-		make[4]: *** [debug] Error 2
-		make[4]: Leaving directory `/c/otp_src_R13B02-1/lib/gs/tcl'
-		make[3]: *** [opt] Error 2
-		make[3]: Leaving directory `/c/otp_src_R13B02-1/lib/gs/tcl'
-		make[2]: *** [opt] Error 2
-		make[2]: Leaving directory `/c/otp_src_R13B02-1/lib/gs'
-		make[1]: *** [opt] Error 2
-		make[1]: Leaving directory `/c/otp_src_R13B02-1/lib'
-		make: *** [libs] Error 2
-		VC2008: otp_src_R13B02-1 $
-		
-	- MOVED THE LIBRARY OUT OF /LIB to get the rest to compile!
+	- Optionally... get rid of the cygdrive prefix (to use /c/... instead of
+	  /c/cygdrive/...) by adding the following line:
+	    mount --change-cygdrive-prefix /
+	  to the beginning of your ~/.bashrc file.
+
+	  Simply running the command on the prompt would change the prefix
+	  but the PATH environment variable would still contain paths with the
+	  /cygdrive prefix.
 
 #####################################################
 
-	- Get wxWidgets to work!
+2) Download Visual C++ 2008 Express Edition
+	My installation was done under:
+		c:/MSVC9.0
+	Remember that if you copy paste something from this tutorial.
 
-		*********************************************************************
-		**********************  APPLICATIONS INFORMATION  *******************
-		*********************************************************************
-
-		wx             : Can not link the wx driver, wx will NOT be useable
-
-		*********************************************************************
-
-6) Get wxWidgets:
-	- run the wxWidgets-2.8.10 installer;
-	- edit <wxWidgets dir>/include/wx/msw/setup.h and enable:
-		- wxUSE_GLCANVAS
-		- wxUSE_POSTSCRIPT
-		- wxUSE_GRAPHICS_CONTEXT
-	- open <wxWidgets dir>/build/msw/wx.dsw (letting VC convert the projects)
-		- build the "Unicode Release" and "Unicode Debug" configurations
-	- open <wxWidgets dir>/contrib/build/stc/stc.dsw (letting VC convert the projects)
-		- build the "Unicode Release" and "Unicode Debug" configurations
-
-	Further info:
-		- http://wiki.wxwidgets.org/MS_Free_Tools_And_WxWidgets
-		- http://wiki.wxwidgets.org/Visual_Studio_2008_%289.0%29
-
-	Information from the wx application:
-
-		Please check that wx-config is in path, the directory
-		where wxWidgets libraries are installed (returned by
-		'wx-config --libs' or 'wx-config --static --libs' command)
-		is in LD_LIBRARY_PATH or equivalent variable and
-		wxWidgets version is $reqwx or above.])
-
-	- the static libraries are created in this directory:
-		<wxWidgets dir>\lib\vc_lib
-
-	- the "wx-config" binary did not exist but there was a wx-config.in so I ran
-		$ ./configure
-	  and that produced wx-config.
-	  
-		$ ./wx-config --libs
-		-L/c/Progra~1/wxWidgets-2.8.10/lib   -lwx_msw_richtext-2.8 -lwx_msw_aui-2.8
-		-lwx_msw_xrc-2.8 -lwx_msw_qa-2.8 -lwx_msw_html-2.8 -lwx_msw_adv-2.8
-		-lwx_msw_core-2.8 -lwx_base_xml-2.8 -lwx_base_net-2.8 -lwx_base-2.8
-
-	- Get it working by:
-		VC2008: wx $ export PATH="$PATH:/c/Progra~1/wxWidgets-2.8.10"
-		VC2008: wx $ wx-config
-		wx-config [--prefix[=DIR]] [--exec-prefix[=DIR]] [--release] [--version-full]
-		...
-
-		VC2008: wx $ echo $LD_LIBRARY_PATH
-		<nothing>
-		VC2008: wx $ export LD_LIBRARY_PATH="/c/Progra~1/wxWidgets-2.8.10/lib/vc_lib"
+VC++ 2008 Express Edition doesn't include the Message Compiler (mc.exe)
+which will be needed later in the build process.
+	Details:
+		http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=374833
+		http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=477064
 		
-		...
-		nem assim :\
+Get a copy of this file of a Windows SDK and place it in:
+	c:\MSVC9.0\VC\bin
 
+Question: is this file freely distributable? If so I could add it to the repo.
+
+Possible workaround:
+	http://bugs.mysql.com/bug.php?id=40280
+
+#####################################################
+
+3) Get and install Sun's Java SE Development Kit 6u16
+
+	- Add the bin dir to the PATH environment variable in windows
+	  or in some cygwin "boot script"
+
+		$ export PATH="$PATH:/c/Progra~1/Java/jdk1.6.0_16/bin"
+
+#####################################################
+
+4) Install "Win32 OpenSSL v0.9.8k"
+	-> NOT "Win32 OpenSSL v0.9.8k Light"
+
+	- Get the installer here:
+		http://www.slproweb.com/products/Win32OpenSSL.html
+	
+	- Take notice of the install dir to use on step 14.
+
+#####################################################
+
+5) Get and unpack the erlang source distribution with Cygwin's tar.
+	-> Unpacked using 7zip to:
+		c:/otp_src_R13B02-1
+		
+#####################################################
+	
+6) set ERL_TOP to where you unpacked the source distribution
+	$ export ERL_TOP=/c/otp_src_R13B02-1
+	$ cd $ERL_TOP
+
+#####################################################
+
+7) Setup the environment for building under windows:
+
+		$ eval `./otp_build env_win32`
+		
+#####################################################
+
+8) Create a script to modify the PATH and other environment variables
+     so that the VC compiler is accessible from the shell.
+	
+	- I followed this suggestion:
+			http://www.cygwin.com/ml/cygwin/2008-05/msg00322.html
+	  And adapted the values to match Visual C++ 2008 SP1 Express Edition
+	  current bindings. Check C:\MSVC9.0\Common7\Tools\vsvars32.bat
+	  to see if there are any changes on your machine.
+
+	- create a vcshell script under the c:/cygwin/bin folder
+	   containing the following commands:
+		#!/bin/sh
+
+		# This file mimics the environment setup done by
+		# C:\MSVC9.0\VC\bin\vsvars32.bat.
+
+		# Change these to match your installation paths
+		WIN_VCROOT="c:/MSVC9.0"
+		WIN_VCDIR="$WIN_VCROOT/VC"
+		WIN_WSDKDIR="c:\\Program Files\\Microsoft SDKs\\Windows\\v6.0A"
+		WIN_DOTNET="c:\\WINDOWS\\Microsoft.NET\\Framework"
+
+		# Lib and INCLUDE should be Windows'ish
+		# Note that semicolon (;) is used to separate Windows style paths but
+		# colon (:) to separate Cygwin ditto!
+
+		INCLUDE="$WIN_VCDIR\\include;$WIN_WSDKDIR\\include"
+		LIB="$WIN_VCDIR\\lib;$WIN_WSDKDIR\\lib"
+		LIBPATH="$WIN_DOTNET\\v3.5;$WIN_DOTNET\\v2.0.50727;$WIN_VCDIR\\lib"
+
+		# The PATH variable should be Cygwin'ish
+		VCROOT=`cygpath "$WIN_VCROOT"`
+		VCDIR="$VCROOT/VC"
+		COMDIR="$VCROOT/Common7"
+		WSDKDIR=`cygpath "$WIN_WSDKDIR"`
+		DOTNET=`cygpath "$WIN_DOTNET"`
+
+		PATH="$WSDKDIR/bin:$PATH"
+		PATH="$COMDIR/IDE:$PATH"
+		PATH="$VCDIR/bin:$PATH"
+		PATH="$COMDIR/Tools:$PATH"
+		PATH="$COMDIR/Tools/bin:$PATH"
+		PATH="$DOTNET/v3.5:$DOTNET/v2.0.50727:$PATH"
+		PATH="$VCDIR/vcPackages:$PATH"
+
+		export INCLUDE LIB LIBPATH PATH
+
+		echo "Say 'exit' to leave the VC2008 shell and restore Cygwin environment."
+		/usr/bin/bash --rcfile ~/.vcvars9rc
+
+	- create a ~/.vcvars9rc file containing:
+		PS1='VC2008: \W \$ '
+
+#####################################################
+
+9) Enter the VC2008 shell
+
+		$ vcshell
+		Say 'exit' to leave VC2008 shell and restore Cygwin environment.
+		VC2008: otp_src_R13B02-1 $
+	
+	 (from now on all commands are assumed to be run inside this subshell)
+
+#####################################################
+
+10) Check if the PATH to VC's tools are correct
+
+		$ which cl
+		/c/MSVC9.0/VC/bin/cl
+		
+		$ which link
+		/c/MSVC9.0/VC/bin/link
+		
+		$ which mt
+		/c/Progra~1/Micros~2/Windows/v6.0A/bin/mt
+		
+		$ which mc
+		/c/MSVC9.0/VC/bin/mc
+		(check step 2 for this last one)
+		
+	- if any of the binaries is missing there's no point in going any further.
+	  Just go back to the previous step and fix the PATH!
+
+#####################################################
+
+11) Check if the java compiler can be found (complement to step 3)
+		
+		$ which javac
+		/c/PROGRA~1/Java/JDK16~1.0_1/bin/javac
+
+#####################################################
+
+12) Make sure that the directory specified by the TMP environment variable
+     exists and has write permissions (otherwise compilation will fail).
+
+		$ echo $TMP
+		/c/DOCUME~1/Monkey/LOCALS~1/Temp
+		$ touch $TMP/test && ls $TMP/test
+		/c/DOCUME~1/Monkey/LOCALS~1/Temp/test
+	
+	- if case that fails this is sure to work:
+		$ export TMP=/tmp
+
+#####################################################
+
+13) Set log files for the various scripts that run during the build process:
+		$ export CC_SH_DEBUG_LOG=/c/otp_src_R13B02-1/cc.log
+		$ export LD_SH_DEBUG_LOG=/c/otp_src_R13B02-1/ld.log
+		$ export RC_SH_DEBUG_LOG=/c/otp_src_R13B02-1/rc.log
+		$ export MD_SH_DEBUG_LOG=/c/otp_src_R13B02-1/md.log
+		$ export MC_SH_DEBUG_LOG=/c/otp_src_R13B02-1/mc.log
+	
+	This is really useful when things go wrong! :)
+
+#####################################################
+
+14) Run the configure script
+
+	$ ./otp_build configure [--with-ssl=<OpenSSL directory>]
+
+#####################################################	
+
+15) Build a complete OTP system
+
+		$ ./otp_build boot -a
+	
+	- While compiling it's possible that resource compilation fails
+	  resulting in something like this:
+	  
+			rc.sh -I/c/PROGRA~1/wxWidgets-2.8.10/include -D __WIN32__ -o win32/wxe_win32.res wxe_win32.rc
+			make[3]: *** [win32/wxe_win32.res] Error 127
+			make[3]: Leaving directory `/c/otp_src_R13B02-1/lib/wx/c_src'
+			make[2]: *** [opt] Error 2
+			make[2]: Leaving directory `/c/otp_src_R13B02-1/lib/wx'
+			make[1]: *** [opt] Error 2
+			make[1]: Leaving directory `/c/otp_src_R13B02-1/lib'
+			make: *** [libs] Error 2
+	
+	  Don't panic! Just go to said directory and repeat the failed command.
+	  I think the error is due to rc.exe always showing the banner:
+		Microsoft (R) Windows (R) Resource Compiler Version 6.1.6723.1
+		Copyright (C) Microsoft Corporation.  All rights reserved.
+	  
+	  Unfortunately there is no /nologo or -nologo option to turn it off
+	  Info: http://social.msdn.microsoft.com/Forums/en-US/windowssdk/thread/88bd1f52-af7d-4aa7-982a-f8798b32288d
+	  Perhaps the rc.sh script can be changed to prevent this failure
+	  (care to help? :)).
+
+	- This uses the bootstrap directory (shipped with the source,
+	  $ERL_TOP/bootstrap) to build a complete OTP system. It first
+	  builds an emulator and sets up a minimal OTP system under
+	  $ERL_TOP/bootstrap, then starts to compile the different OTP
+	  compilers to make the $ERL_TOP/bootstrap system potent enough
+	  to be able to compile all Erlang code in OTP. Then, all Erlang and
+	  C code under $ERL_TOP/lib is built using the bootstrap system,
+	  giving a complete OTP system (although not installed). When this
+	  is done, one can run Erlang from within the source tree, just type
+	  $ERL_TOP/bin/erl and you should have a prompt. If you omit the
+	  -a flag, you'll get a smaller system, that might be useful during
+	  development.
+
+#####################################################	
+
+16) Build an erlang release
+
+		$ ./otp_build release -a
+
+	- Builds a commercial release tree from the source tree, default is
+	  to put it in $ERL_TOP/release/win32, you can give any directory 
+	  as parameter (Cygwin style), but it doesn't really matter if you're
+	  going to build a self extracting installer too. You could of course 
+	  build release to the final directory and then run ./Install.exe 
+	  standing in the directory where the release was put, that will 
+	  create a fully functional OTP installation.
+
+#####################################################	
+
+17) Create the installer
+
+	- Get and install NSIS 2.45
+		- http://nsis.sourceforge.net/Download
+
+	- Add makensis.exe to the $PATH
+	
+		$ export PATH="/c/Progra~1/NSIS:$PATH"
+
+	- Create the self extracting installer executable
+
+		$ ./otp_build installer_win32
+		make  RELEASE_PATH=/c/otp_src_R13B02-1/release/win32 \
+						  release_spec
+		Failed to locate vcredist_x86.exe because directory structure was unexpected
+		Failed to locate vcredist_x86.exe because directory structure was unexpected
+		make[1]: Entering directory `/c/otp_src_R13B02-1/erts/etc/win32/nsis'
+		Running makensis /V2 erlang20.nsi
+
+		Processed 1 file, writing output:
+
+		Output: "c:\OTP_SR~2\release\win32\otp_win32_R13B02.exe"
+		Install: 5 pages (320 bytes), 4 sections (1 required) (4192 bytes), 5469 instructions (153132 bytes), 5114 strings (107194 bytes), 1 language table (326 bytes).
+
+		Uninstall: 3 pages (192 bytes),
+		1 section (1048 bytes), 78 instructions (2184 bytes), 98 strings (1583 bytes), 1 language table (250 bytes).
+		Datablock optimizer saved 146899 bytes (~0.3%).
+
+		Using bzip2 compression.
+
+		EXE header size:               35840 / 34816 bytes
+		Install code:                  61047 / 265540 bytes
+		Install data:               48303191 / 112543769 bytes
+		Uninstall code+data:            2056 / 2454 bytes
+		CRC (0x23DCEC82):                  4 / 4 bytes
+
+		Total size:                 48402138 / 112846583 bytes (42.8%)
+		make[1]: Leaving directory `/c/otp_src_R13B02-1/erts/etc/win32/nsis'
+
+	Et voilá!
+
+	The executable otp_win32_<OTP version>.exe will be placed in
+	the top directory of the release created in the previous step.
+	If no release directory is specified, the release is expected to
+	have been built to $ERL_TOP/release/win32, which also will be
+	the place where the installer executable will be placed. If you
+	specified some other directory for the release (i.e. ./otp_build
+	release -a /tmp/erl_release), you're expected to give the same
+	parameter here, (i.e. ./otp_build installer_win32 /tmp/erl_release).
+
+	You need to have a full NSIS installation and makensis.exe in your
+	path for this to work of course. Once you have created the installer,
+	you can run it to install Erlang/OTP in the regular way, just run the
+	executable and follow the steps in the installation wizard. To get all
+	default settings in the installation without any questions asked, you
+	run the executable with the parameter "/S" (capital S). like in:
+		------------------------------------------------------
+		$ cd $ERL_TOP
+		$ release/win32/otp_win32_R9C /S
+		.....
+		------------------------------------------------------
+	- and after a while Erlang will have been installed in 
+	C:\Program Files\erl5.5, with shortcuts in the menu etc.
+
+	*NOTE* Beginning with R9C, the Windows installer does *not* add Erlang
+	to the system wide path. If one wants to have Erlang in the path, one
+	has to add it by hand.
+
+	The necessary setup of an Erlang installation is actually done by the
+	program Install.exe, which resides in the release top. That program
+	creates ".ini-files" and copies the correct boot scripts. If one has
+	the correct directory tree (like after a ./otp_build release -a), only
+	the running of Install.exe is necessary to get a fully functional
+	OTP. What the self extracting installer adds is (of course) the
+	possibility to distribute the binary easily, together with adding
+	shortcuts to the Windows start menu. There is also some adding of
+	entries in the registry, to associate .erl and .beam files with Erlang
+	and get nifty icons, but that's not something you'll really need to
+	run Erlang. The registry is also used to store uninstall information,
+	but if one has not used the self extracting installer, one cannot
+	(need not) do any uninstall, one just scratches the release directory
+	and everything is gone. Erlang/OTP R9C does not *need* to put anything
+	in the Windows registry at all, and does not if you don't use the self
+	extracting installer. In other words the installer is pure cosmetics
+	:-)
 
 #####################################################
