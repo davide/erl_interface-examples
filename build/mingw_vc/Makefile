@@ -5,8 +5,8 @@ include ../BuildConfig.mk
 TARGET=mingw_vc
 BIN_EXT=.exe
 
-ERL_INTERFACE_DIR=c:/erl5.7.1/lib/erl_interface-3.6.1
-VC_DIR=c:/Progra~1/VS9.0/VC
+ERL_INTERFACE_DIR=d:/Programas/erl5.7.3/lib/erl_interface-3.6.3
+VC_DIR=c:/MSVC9.0/VC
 ERL_INTERFACE_LIBRARY_BINDING=-L$(ERL_INTERFACE_DIR)/lib -lerl_interface -lei -L$(VC_DIR)/lib
 
 ### Build flags for all targets

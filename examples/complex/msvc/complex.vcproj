@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\erl5.7.1\lib\erl_interface-3.6.1\include"
+				AdditionalIncludeDirectories="d:\programas\erl5.7.3\lib\erl_interface-3.6.3\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;__WIN32__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -65,7 +65,7 @@
 				AdditionalOptions="/NODEFAULTLIB:libcmt.lib"
 				AdditionalDependencies="erl_interface.lib ei.lib wsock32.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="C:\erl5.7.1\lib\erl_interface-3.6.1\lib"
+				AdditionalLibraryDirectories="d:\programas\erl5.7.3\lib\erl_interface-3.6.3\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -119,7 +119,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="C:\erl5.7.1\lib\erl_interface-3.6.1\include"
+				AdditionalIncludeDirectories="d:\programas\erl5.7.3\lib\erl_interface-3.6.3\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;__WIN32__"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -142,7 +142,7 @@
 				AdditionalOptions="/NODEFAULTLIB:libcmt.lib"
 				AdditionalDependencies="erl_interface.lib ei.lib wsock32.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="C:\erl5.7.1\lib\erl_interface-3.6.1\lib"
+				AdditionalLibraryDirectories="d:\programas\erl5.7.3\lib\erl_interface-3.6.3\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -185,11 +185,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\main.c"
+				RelativePath="..\erl_comm.c"
 				>
 			</File>
 			<File
-				RelativePath="..\erl_comm.c"
+				RelativePath="..\main.c"
 				>
 			</File>
 		</Filter>
