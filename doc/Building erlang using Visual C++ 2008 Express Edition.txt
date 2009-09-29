@@ -199,6 +199,7 @@ $ERL_TOP/lib/wx/configure~2676
 +   'void exit (int);' \
 +   ''
 
+
 #####################################################
                                       Building erlang
 #####################################################
@@ -224,6 +225,7 @@ $ERL_TOP/lib/wx/configure~2676
 	  but the PATH environment variable would still contain paths with the
 	  /cygdrive prefix.
 
+
 #####################################################
 
 2) Download Visual C++ 2008 Express Edition
@@ -245,6 +247,7 @@ Question: is this file freely distributable? If so I could add it to the repo.
 Possible workaround:
 	http://bugs.mysql.com/bug.php?id=40280
 
+
 #####################################################
 
 3) Get and install Sun's Java SE Development Kit 6u16
@@ -254,37 +257,121 @@ Possible workaround:
 
 		$ export PATH="$PATH:/c/Progra~1/Java/jdk1.6.0_16/bin"
 
+
 #####################################################
 
 4) Install "Win32 OpenSSL v0.9.8k"
-	-> NOT "Win32 OpenSSL v0.9.8k Light"
+REQUIRED FOR APPLICATIONS: crypt, ssl, ssh
+
+	-> That's "Win32 OpenSSL v0.9.8k" and
+	    NOT "Win32 OpenSSL v0.9.8k Light"
 
 	- Get the installer here:
 		http://www.slproweb.com/products/Win32OpenSSL.html
 	
-	- Take notice of the install dir to use on step 14.
+	- If not installing in the /c/OpenSSL folder take note of the
+	  install dir (you'll need it later on step 16).
+
 
 #####################################################
 
-5) Get and unpack the erlang source distribution with Cygwin's tar.
+5) Get tcl/tk - or not - your choice!
+REQUIRED FOR APPLICATIONS: gs
+
+	The gs application can run using a system wide install of tcl/tk
+	or a local install (under $ERL_TOP/lib/gs/priv/tcl).
+	
+	During the build process the gs application looks for this file:
+		$ERL_TOP/lib/gs/tcl/binaries/win32.tar.gz
+	In an attempt to deploy to the new system an existing version
+	of the tcl/tk binaries.
+	Unfortunately if you're starting a fresh install you won't have
+	that win32.tar.gz file and the build will fail.
+	
+	Two choices:
+	
+		1) Use a system-wide tcl/tk install
+		
+			- get the tcl/tk binaries
+				http://www.tcl.tk/software/tcltk/
+				
+			- make sure that the wish*.exe binary is on the PATH 
+			
+			- apply the patch to $ERL_TOP/lib/gs/tcl/Makefile.in:36
+				- needed for gs to install even without the local
+				  tcl/tk binaries (win32.tar.gz)
+		
+		
+		2) Fetch the tck/tk binaries from a previous erlang install.
+		    The win32.tar.gz file is nothing more than a tar of the files
+			under: $PREV_ERL_TOP/lib/gs-version/priv/tcl
+				
+				- open a cygwin shell
+				- change dir to $PREV_ERL_TOP/lib/gs-VERSION/priv
+				- mkdir $ERL_TOP/lib/gs/tcl/binaries
+				- tar cvzf $ERL_TOP/lib/gs/tcl/binaries/win32.tar.gz tcl
+			
+			That should create the win32.tar.gz file in the directory
+			where the build process expects it to be.
+
+A big thanks to Juhani Ränkimies for helping out with this one. :)	
+
+
+#####################################################
+
+6) Get wxWidgets-2.8.10
+REQUIRED FOR APPLICATIONS: wx
+	
+	- both the installer or zip packages will do
+		- http://www.wxwidgets.org/downloads/
+		
+	- install/extract wxWidgets to one of these locations:
+		- <cygwin>/opt/local/pgm/wxMSW-2.8.10
+		- c:\\Program Files\\wxWidgets-2.8.10
+		
+	Reminder:
+		- at this point the configure script only checks for versions 2.8.*
+	
+	- edit <wxWidgets dir>/include/wx/msw/setup.h and enable:
+		- wxUSE_GRAPHICS_CONTEXT
+		- wxUSE_GLCANVAS
+		- wxUSE_POSTSCRIPT
+		
+	- open <wxWidgets dir>/build/msw/wx.dsw
+		- let VC convert the projects
+		- build the "Unicode Release" and "Unicode Debug" configurations
+		
+	- open <wxWidgets dir>/contrib/build/stc/stc.dsw
+		- let VC convert the projects
+		- build the "Unicode Release" and "Unicode Debug" configurations
+
+A big thanks to Dan Gudmundsson on this one. :)
+
+
+#####################################################
+
+7) Get and unpack the erlang source distribution with Cygwin's tar.
 	-> Unpacked using 7zip to:
 		c:/otp_src_R13B02-1
-		
+
+
 #####################################################
-	
-6) set ERL_TOP to where you unpacked the source distribution
+
+8) set ERL_TOP to where you unpacked the source distribution
 	$ export ERL_TOP=/c/otp_src_R13B02-1
 	$ cd $ERL_TOP
 
+
 #####################################################
 
-7) Setup the environment for building under windows:
+9) Setup the environment for building under windows:
 
 		$ eval `./otp_build env_win32`
-		
+
+
 #####################################################
 
-8) Create a script to modify the PATH and other environment variables
+10) Create a script to modify the PATH and other environment variables
      so that the VC compiler is accessible from the shell.
 	
 	- I followed this suggestion:
@@ -337,9 +424,10 @@ Possible workaround:
 	- create a ~/.vcvars9rc file containing:
 		PS1='VC2008: \W \$ '
 
+
 #####################################################
 
-9) Enter the VC2008 shell
+11) Enter the VC2008 shell
 
 		$ vcshell
 		Say 'exit' to leave VC2008 shell and restore Cygwin environment.
@@ -347,9 +435,10 @@ Possible workaround:
 	
 	 (from now on all commands are assumed to be run inside this subshell)
 
+
 #####################################################
 
-10) Check if the PATH to VC's tools are correct
+12) Check if the PATH to VC's tools are correct
 
 		$ which cl
 		/c/MSVC9.0/VC/bin/cl
@@ -367,16 +456,18 @@ Possible workaround:
 	- if any of the binaries is missing there's no point in going any further.
 	  Just go back to the previous step and fix the PATH!
 
+
 #####################################################
 
-11) Check if the java compiler can be found (complement to step 3)
+13) Check if the java compiler can be found (complement to step 3)
 		
 		$ which javac
 		/c/PROGRA~1/Java/JDK16~1.0_1/bin/javac
 
+
 #####################################################
 
-12) Make sure that the directory specified by the TMP environment variable
+14) Make sure that the directory specified by the TMP environment variable
      exists and has write permissions (otherwise compilation will fail).
 
 		$ echo $TMP
@@ -387,9 +478,10 @@ Possible workaround:
 	- if case that fails this is sure to work:
 		$ export TMP=/tmp
 
+
 #####################################################
 
-13) Set log files for the various scripts that run during the build process:
+15) Set log files for the various scripts that run during the build process:
 		$ export CC_SH_DEBUG_LOG=/c/otp_src_R13B02-1/cc.log
 		$ export LD_SH_DEBUG_LOG=/c/otp_src_R13B02-1/ld.log
 		$ export RC_SH_DEBUG_LOG=/c/otp_src_R13B02-1/rc.log
@@ -398,15 +490,17 @@ Possible workaround:
 	
 	This is really useful when things go wrong! :)
 
+
 #####################################################
 
-14) Run the configure script
+16) Run the configure script
 
 	$ ./otp_build configure [--with-ssl=<OpenSSL directory>]
 
+
 #####################################################	
 
-15) Build a complete OTP system
+17) Build a complete OTP system
 
 		$ ./otp_build boot -a
 	
@@ -432,32 +526,36 @@ Possible workaround:
 	  Perhaps the rc.sh script can be changed to prevent this failure
 	  (care to help? :)).
 
-	- This uses the bootstrap directory (shipped with the source,
-	  $ERL_TOP/bootstrap) to build a complete OTP system. It first
-	  builds an emulator and sets up a minimal OTP system under
-	  $ERL_TOP/bootstrap, then starts to compile the different OTP
-	  compilers to make the $ERL_TOP/bootstrap system potent enough
-	  to be able to compile all Erlang code in OTP. Then, all Erlang and
-	  C code under $ERL_TOP/lib is built using the bootstrap system,
-	  giving a complete OTP system (although not installed). When this
-	  is done, one can run Erlang from within the source tree, just type
-	  $ERL_TOP/bin/erl and you should have a prompt. If you omit the
-	  -a flag, you'll get a smaller system, that might be useful during
-	  development.
+	From README.win32:
+		This uses the bootstrap directory (shipped with the source,
+		$ERL_TOP/bootstrap) to build a complete OTP system. It first
+		builds an emulator and sets up a minimal OTP system under
+		$ERL_TOP/bootstrap, then starts to compile the different OTP
+		compilers to make the $ERL_TOP/bootstrap system potent enough
+		to be able to compile all Erlang code in OTP. Then, all Erlang and
+		C code under $ERL_TOP/lib is built using the bootstrap system,
+		giving a complete OTP system (although not installed). When this
+		is done, one can run Erlang from within the source tree, just type
+		$ERL_TOP/bin/erl and you should have a prompt. If you omit the
+		-a flag, you'll get a smaller system, that might be useful during
+		development.
+
 
 #####################################################	
 
-16) Build an erlang release
+18) Build an erlang release
 
 		$ ./otp_build release -a
 
-	- Builds a commercial release tree from the source tree, default is
-	  to put it in $ERL_TOP/release/win32, you can give any directory 
-	  as parameter (Cygwin style), but it doesn't really matter if you're
-	  going to build a self extracting installer too. You could of course 
-	  build release to the final directory and then run ./Install.exe 
-	  standing in the directory where the release was put, that will 
-	  create a fully functional OTP installation.
+	From README.win32:
+		Builds a commercial release tree from the source tree, default is
+		to put it in $ERL_TOP/release/win32, you can give any directory 
+		as parameter (Cygwin style), but it doesn't really matter if you're
+		going to build a self extracting installer too. You could of course 
+		build release to the final directory and then run ./Install.exe 
+		standing in the directory where the release was put, that will 
+		create a fully functional OTP installation.
+
 
 #####################################################	
 
@@ -502,49 +600,51 @@ Possible workaround:
 
 	Et voilá!
 
-	The executable otp_win32_<OTP version>.exe will be placed in
-	the top directory of the release created in the previous step.
-	If no release directory is specified, the release is expected to
-	have been built to $ERL_TOP/release/win32, which also will be
-	the place where the installer executable will be placed. If you
-	specified some other directory for the release (i.e. ./otp_build
-	release -a /tmp/erl_release), you're expected to give the same
-	parameter here, (i.e. ./otp_build installer_win32 /tmp/erl_release).
+	From README.win32:
+		The executable otp_win32_<OTP version>.exe will be placed in
+		the top directory of the release created in the previous step.
+		If no release directory is specified, the release is expected to
+		have been built to $ERL_TOP/release/win32, which also will be
+		the place where the installer executable will be placed. If you
+		specified some other directory for the release (i.e. ./otp_build
+		release -a /tmp/erl_release), you're expected to give the same
+		parameter here, (i.e. ./otp_build installer_win32 /tmp/erl_release).
 
-	You need to have a full NSIS installation and makensis.exe in your
-	path for this to work of course. Once you have created the installer,
-	you can run it to install Erlang/OTP in the regular way, just run the
-	executable and follow the steps in the installation wizard. To get all
-	default settings in the installation without any questions asked, you
-	run the executable with the parameter "/S" (capital S). like in:
-		------------------------------------------------------
-		$ cd $ERL_TOP
-		$ release/win32/otp_win32_R9C /S
-		.....
-		------------------------------------------------------
-	- and after a while Erlang will have been installed in 
-	C:\Program Files\erl5.5, with shortcuts in the menu etc.
+		You need to have a full NSIS installation and makensis.exe in your
+		path for this to work of course. Once you have created the installer,
+		you can run it to install Erlang/OTP in the regular way, just run the
+		executable and follow the steps in the installation wizard. To get all
+		default settings in the installation without any questions asked, you
+		run the executable with the parameter "/S" (capital S). like in:
+			------------------------------------------------------
+			$ cd $ERL_TOP
+			$ release/win32/otp_win32_R9C /S
+			.....
+			------------------------------------------------------
+		- and after a while Erlang will have been installed in 
+		C:\Program Files\erl5.5, with shortcuts in the menu etc.
 
-	*NOTE* Beginning with R9C, the Windows installer does *not* add Erlang
-	to the system wide path. If one wants to have Erlang in the path, one
-	has to add it by hand.
+		*NOTE* Beginning with R9C, the Windows installer does *not* add
+		Erlang to the system wide path. If one wants to have Erlang in the
+		path, one has to add it by hand.
 
-	The necessary setup of an Erlang installation is actually done by the
-	program Install.exe, which resides in the release top. That program
-	creates ".ini-files" and copies the correct boot scripts. If one has
-	the correct directory tree (like after a ./otp_build release -a), only
-	the running of Install.exe is necessary to get a fully functional
-	OTP. What the self extracting installer adds is (of course) the
-	possibility to distribute the binary easily, together with adding
-	shortcuts to the Windows start menu. There is also some adding of
-	entries in the registry, to associate .erl and .beam files with Erlang
-	and get nifty icons, but that's not something you'll really need to
-	run Erlang. The registry is also used to store uninstall information,
-	but if one has not used the self extracting installer, one cannot
-	(need not) do any uninstall, one just scratches the release directory
-	and everything is gone. Erlang/OTP R9C does not *need* to put anything
-	in the Windows registry at all, and does not if you don't use the self
-	extracting installer. In other words the installer is pure cosmetics
-	:-)
+		The necessary setup of an Erlang installation is actually done by the
+		program Install.exe, which resides in the release top. That program
+		creates ".ini-files" and copies the correct boot scripts. If one has
+		the correct directory tree (like after a ./otp_build release -a), only
+		the running of Install.exe is necessary to get a fully functional
+		OTP. What the self extracting installer adds is (of course) the
+		possibility to distribute the binary easily, together with adding
+		shortcuts to the Windows start menu. There is also some adding of
+		entries in the registry, to associate .erl and .beam files with Erlang
+		and get nifty icons, but that's not something you'll really need to
+		run Erlang. The registry is also used to store uninstall information,
+		but if one has not used the self extracting installer, one cannot
+		(need not) do any uninstall, one just scratches the release directory
+		and everything is gone. Erlang/OTP R9C does not *need* to put 
+		anything in the Windows registry at all, and does not if you don't
+		use the self extracting installer. In other words the installer is pure
+		cosmetics :-)
+
 
 #####################################################
