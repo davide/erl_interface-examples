@@ -19,6 +19,7 @@ By the way, have I mentioned?
 Let me know (nesrait@gmail.com) if you find errors or have any
 suggestions that might improve this tutorial.
 
+
 #####################################################
 					BUGS & PATCHES - read and apply as needed!
 #####################################################	
@@ -177,27 +178,12 @@ for dir in $CWXWIN /opt/local/pgm/wxMSW-2.8.*; do
 
 ---------------------------------
 
-Mandatory patches for building wxWidgets with VC++ Express 2008:
+Mandatory patch for building wxWidgets with VC++ Express 2008:
 
 cc.sh bug: files with the .cc extension are rewritten on compile.
 $ERL_TOP/erts/etc/win32/cygwin_tools/vc/cc.sh:224:
 -o=`echo $x | sed 's,.*/,,' | sed 's,\.cp*$,.o,'`
 +o=`echo $x | sed 's,.*/,,' | sed 's,\.cp*$,.o,' | sed 's,\.cc$,.o,'`
-
-Dirty fix! I believe the actual fix involves running autoconf again
-to recreate configure from configure.in - with a version of autoconf
-that includes this patch:
-	http://www.mail-archive.com/autoconf-patches@gnu.org/msg00826.html
-
-Anyway... this works:
-$ERL_TOP/lib/wx/configure~2314
--   'void exit (int);'
-+   'void exit (int);' \
-+   ''
-$ERL_TOP/lib/wx/configure~2676
--   'void exit (int);'
-+   'void exit (int);' \
-+   ''
 
 
 #####################################################
@@ -270,7 +256,7 @@ REQUIRED FOR APPLICATIONS: crypt, ssl, ssh
 		http://www.slproweb.com/products/Win32OpenSSL.html
 	
 	- If not installing in the /c/OpenSSL folder take note of the
-	  install dir (you'll need it later on step 16).
+	  install dir (you'll need it later on step 17).
 
 
 #####################################################
@@ -493,14 +479,43 @@ A big thanks to Dan Gudmundsson on this one. :)
 
 #####################################################
 
-16) Run the configure script
+16) Run autoconf to update the configure files
+
+	$ ./otp_build autoconf
+
+	***************************************************
+	***************************************************
+	*** WARNING: System might fail to configure or
+	***          might be erroneously configured
+	***          since autoconf version 2.64 is used
+	***          instead of version 2.59!
+	***************************************************
+	***************************************************
+	=== running autoconf in lib
+	configure.in:35: warning: AC_CONFIG_SUBDIRS: you should use literals
+	/usr/src/packages/autoconf/26/autoconf2.5-2.64-1/src/autoconf-2.64/lib/autoconf/status.m4:1111: AC_CONFIG_SUBDIRS is expanded from...
+	configure.in:35: the top level
+	=== running autoconf in lib/common_test
+	=== running autoconf in lib/erl_interface
+	=== running autoconf in lib/gs
+	=== running autoconf in lib/megaco
+	=== running autoconf in lib/odbc
+	=== running autoconf in lib/snmp
+	=== running autoconf in lib/wx
+	=== running autoconf in erts
+	/usr/bin/m4: cannot remove temporary directory /tmp/m4-rUNfpj: Directory not empty
+	autom4te-2.64: /usr/bin/m4 failed with exit status: 1
+
+#####################################################
+
+17) Run the configure script
 
 	$ ./otp_build configure [--with-ssl=<OpenSSL directory>]
 
 
 #####################################################	
 
-17) Build a complete OTP system
+18) Build a complete OTP system
 
 		$ ./otp_build boot -a
 	
@@ -543,7 +558,7 @@ A big thanks to Dan Gudmundsson on this one. :)
 
 #####################################################	
 
-18) Build an erlang release
+19) Build an erlang release
 
 		$ ./otp_build release -a
 
@@ -559,7 +574,7 @@ A big thanks to Dan Gudmundsson on this one. :)
 
 #####################################################	
 
-17) Create the installer
+20) Create the installer
 
 	- Get and install NSIS 2.45
 		- http://nsis.sourceforge.net/Download
