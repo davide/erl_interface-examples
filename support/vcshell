@@ -18,11 +18,13 @@ LIB="$WIN_VCDIR\\lib;$WIN_WSDKDIR\\lib"
 LIBPATH="$WIN_DOTNET\\v3.5;$WIN_DOTNET\\v2.0.50727;$WIN_VCDIR\\lib"
 
 # The PATH variable should be Cygwin'ish
-VCROOT=`cygpath "$WIN_VCROOT"`
+# AND we'll ensure that the paths are converted to short-names
+# to prevent any wrapper scripts from blowing up!
+VCROOT=`cygpath -s -m "$WIN_VCROOT" | xargs cygpath`
 VCDIR="$VCROOT/VC"
 COMDIR="$VCROOT/Common7"
-WSDKDIR=`cygpath "$WIN_WSDKDIR"`
-DOTNET=`cygpath "$WIN_DOTNET"`
+WSDKDIR=`cygpath -s -m "$WIN_WSDKDIR" | xargs cygpath`
+DOTNET=`cygpath -s -m "$WIN_DOTNET" | xargs cygpath`
 
 PATH="$WSDKDIR/bin:$PATH"
 PATH="$COMDIR/IDE:$PATH"

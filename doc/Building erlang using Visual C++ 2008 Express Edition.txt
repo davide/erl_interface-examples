@@ -164,14 +164,14 @@ Enabling the detection of a wxWidgets installation under c:\Program Files.
 
 $ERL_TOP/lib/wx/configure.in:292
 AC_MSG_CHECKING(for WxWidgets in standard locations)
-+PROGRAM_FILES_SHORTNAME=`cygpath -s -m "c:\\Program Files"`
++PROGRAM_FILES_SHORTNAME=`cygpath -d "c:\\Program Files"`
 +WXWIN="$PROGRAM_FILES_SHORTNAME\\wxWidgets-2.8.*"
 CWXWIN=`cygpath $WXWIN 2>/dev/null`
 for dir in $CWXWIN /opt/local/pgm/wxMSW-2.8.*; do
 
 $ERL_TOP/lib/wx/configure~4565
 echo $ECHO_N "checking for WxWidgets in standard locations... $ECHO_C" >&6
-+PROGRAM_FILES_SHORTNAME=`cygpath -s -m "c:\\Program Files"`
++PROGRAM_FILES_SHORTNAME=`cygpath -d "c:\\Program Files"`
 +WXWIN="$PROGRAM_FILES_SHORTNAME\\wxWidgets-2.8.*"
 CWXWIN=`cygpath $WXWIN 2>/dev/null`
 for dir in $CWXWIN /opt/local/pgm/wxMSW-2.8.*; do
@@ -184,6 +184,20 @@ cc.sh bug: files with the .cc extension are rewritten on compile.
 $ERL_TOP/erts/etc/win32/cygwin_tools/vc/cc.sh:224:
 -o=`echo $x | sed 's,.*/,,' | sed 's,\.cp*$,.o,'`
 +o=`echo $x | sed 's,.*/,,' | sed 's,\.cp*$,.o,' | sed 's,\.cc$,.o,'`
+
+---------------------------------
+
+If the paths to the executables (rc.exe and mc.exe) contain spaces
+then the wrapper scripts will fail without any meaningful error.
+The following changes ensure that the spaces are removed.
+
+$ERL_TOP/erts/etc/win32/cygwin_tools/vc/rc.sh:34:
+-	    RCC=$p/rc.exe
++	    RCC=`cygpath -d $p/rc.exe | xargs cygpath`
+
+$ERL_TOP/erts/etc/win32/cygwin_tools/vc/mc.sh:35:
+-	    MCC=$p/mc.exe
++		MCC=`cygpath -s -m $p/mc.exe | xargs cygpath`
 
 
 #####################################################
@@ -388,11 +402,13 @@ A big thanks to Dan Gudmundsson on this one. :)
 		LIBPATH="$WIN_DOTNET\\v3.5;$WIN_DOTNET\\v2.0.50727;$WIN_VCDIR\\lib"
 
 		# The PATH variable should be Cygwin'ish
-		VCROOT=`cygpath "$WIN_VCROOT"`
+		# AND we'll ensure that the paths are converted to short-names
+		# to prevent any wrapper scripts from blowing up!
+		VCROOT=`cygpath -d "$WIN_VCROOT" | xargs cygpath`
 		VCDIR="$VCROOT/VC"
 		COMDIR="$VCROOT/Common7"
-		WSDKDIR=`cygpath "$WIN_WSDKDIR"`
-		DOTNET=`cygpath "$WIN_DOTNET"`
+		WSDKDIR=`cygpath -d "$WIN_WSDKDIR" | xargs cygpath`
+		DOTNET=`cygpath -d "$WIN_DOTNET" | xargs cygpath`
 
 		PATH="$WSDKDIR/bin:$PATH"
 		PATH="$COMDIR/IDE:$PATH"
@@ -425,6 +441,8 @@ A big thanks to Dan Gudmundsson on this one. :)
 #####################################################
 
 12) Check if the PATH to VC's tools are correct
+	  and that none of them contain spaces
+	  (the vcshell script should have taken care of that)
 
 		$ which cl
 		/c/MSVC9.0/VC/bin/cl
@@ -433,7 +451,10 @@ A big thanks to Dan Gudmundsson on this one. :)
 		/c/MSVC9.0/VC/bin/link
 		
 		$ which mt
-		/c/Progra~1/Micros~2/Windows/v6.0A/bin/mt
+		/c/PROGRA~1/MICROS~2/Windows/v6.0A/bin/mt
+		
+		# which rc
+		/c/PROGRA~1/MICROS~2/Windows/v6.0A/bin/rc
 		
 		$ which mc
 		/c/MSVC9.0/VC/bin/mc
@@ -518,28 +539,6 @@ A big thanks to Dan Gudmundsson on this one. :)
 18) Build a complete OTP system
 
 		$ ./otp_build boot -a
-	
-	- While compiling it's possible that resource compilation fails
-	  resulting in something like this:
-	  
-			rc.sh -I/c/PROGRA~1/wxWidgets-2.8.10/include -D __WIN32__ -o win32/wxe_win32.res wxe_win32.rc
-			make[3]: *** [win32/wxe_win32.res] Error 127
-			make[3]: Leaving directory `/c/otp_src_R13B02-1/lib/wx/c_src'
-			make[2]: *** [opt] Error 2
-			make[2]: Leaving directory `/c/otp_src_R13B02-1/lib/wx'
-			make[1]: *** [opt] Error 2
-			make[1]: Leaving directory `/c/otp_src_R13B02-1/lib'
-			make: *** [libs] Error 2
-	
-	  Don't panic! Just go to said directory and repeat the failed command.
-	  I think the error is due to rc.exe always showing the banner:
-		Microsoft (R) Windows (R) Resource Compiler Version 6.1.6723.1
-		Copyright (C) Microsoft Corporation.  All rights reserved.
-	  
-	  Unfortunately there is no /nologo or -nologo option to turn it off
-	  Info: http://social.msdn.microsoft.com/Forums/en-US/windowssdk/thread/88bd1f52-af7d-4aa7-982a-f8798b32288d
-	  Perhaps the rc.sh script can be changed to prevent this failure
-	  (care to help? :)).
 
 	From README.win32:
 		This uses the bootstrap directory (shipped with the source,
@@ -561,6 +560,9 @@ A big thanks to Dan Gudmundsson on this one. :)
 19) Build an erlang release
 
 		$ ./otp_build release -a
+	
+	If you applied all the patches there should be no errors.
+	But if there are... let me know and I'll see if I can help.
 
 	From README.win32:
 		Builds a commercial release tree from the source tree, default is
