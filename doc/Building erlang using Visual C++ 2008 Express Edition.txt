@@ -189,15 +189,23 @@ $ERL_TOP/erts/etc/win32/cygwin_tools/vc/cc.sh:224:
 
 If the paths to the executables (rc.exe and mc.exe) contain spaces
 then the wrapper scripts will fail without any meaningful error.
-The following changes ensure that the spaces are removed.
+To prevent this from happening you need to make sure that the
+spaces are removed.
+This step would normally take care of that:
+	$ eval `./otp_build env_win32`
 
-$ERL_TOP/erts/etc/win32/cygwin_tools/vc/rc.sh:34:
--	    RCC=$p/rc.exe
-+	    RCC=`cygpath -d $p/rc.exe | xargs cygpath`
+But if you're using a cygdrive prefix different from /cygdrive then
+you need to apply this patch:
 
-$ERL_TOP/erts/etc/win32/cygwin_tools/vc/mc.sh:35:
--	    MCC=$p/mc.exe
-+		MCC=`cygpath -s -m $p/mc.exe | xargs cygpath`
+$ERL_TOP/otp_build:584
++    P2=`echo $PATH | sed 's,",,g'`
+-    P2=`echo $PATH | \
+-	sed 's,",,g;s,:[cC]:,:/cygdrive/c,g;s,:[dD]:,:/cygdrive/d,g'`
+
+$ERL_TOP/otp_build:629
++    P2=`echo $PATH | sed 's,",,g'`
+-    P2=`echo $PATH | \
+-	sed 's,",,g;s,:[cC]:,:/cygdrive/c,g;s,:[dD]:,:/cygdrive/d,g'`
 
 
 #####################################################
@@ -216,14 +224,14 @@ $ERL_TOP/erts/etc/win32/cygwin_tools/vc/mc.sh:35:
 	- install make using cygwin's setup:
 		- package -> devel -> make
 	
-	- Optionally... get rid of the cygdrive prefix (to use /c/... instead of
-	  /c/cygdrive/...) by adding the following line:
+	- In my cygwin installation I've changed the cygdrive prefix
+	  (to use /c/... instead of /c/cygdrive/...) by adding
 	    mount --change-cygdrive-prefix /
-	  to the beginning of your ~/.bashrc file.
+	  to the beginning of the ~/.bashrc file.
 
-	  Simply running the command on the prompt would change the prefix
-	  but the PATH environment variable would still contain paths with the
-	  /cygdrive prefix.
+	  If you also have a non-default cygdrive-prefix then you have to
+	  apply all the path-correcting patches.
+	  Caveat emptor and all that.
 
 
 #####################################################
@@ -364,14 +372,7 @@ A big thanks to Dan Gudmundsson on this one. :)
 
 #####################################################
 
-9) Setup the environment for building under windows:
-
-		$ eval `./otp_build env_win32`
-
-
-#####################################################
-
-10) Create a script to modify the PATH and other environment variables
+9) Create a script to modify the PATH and other environment variables
      so that the VC compiler is accessible from the shell.
 	
 	- I followed this suggestion:
@@ -385,38 +386,34 @@ A big thanks to Dan Gudmundsson on this one. :)
 		#!/bin/sh
 
 		# This file mimics the environment setup done by
-		# C:\MSVC9.0\VC\bin\vsvars32.bat.
+		# C:\MSVC9.0\Common7\Tools\vsvars32.bat
 
 		# Change these to match your installation paths
-		WIN_VCROOT="c:/MSVC9.0"
-		WIN_VCDIR="$WIN_VCROOT/VC"
-		WIN_WSDKDIR="c:\\Program Files\\Microsoft SDKs\\Windows\\v6.0A"
-		WIN_DOTNET="c:\\WINDOWS\\Microsoft.NET\\Framework"
+		VCROOT="c:\MSVC9.0"
+		VCDIR="$VCROOT\VC"
+		COMDIR="$VCROOT\Common7"
+		WSDKDIR="c:\Program Files\Microsoft SDKs\Windows\v6.0A"
+		DOTNET="c:\WINDOWS\Microsoft.NET\Framework"
 
 		# Lib and INCLUDE should be Windows'ish
 		# Note that semicolon (;) is used to separate Windows style paths but
 		# colon (:) to separate Cygwin ditto!
 
-		INCLUDE="$WIN_VCDIR\\include;$WIN_WSDKDIR\\include"
-		LIB="$WIN_VCDIR\\lib;$WIN_WSDKDIR\\lib"
-		LIBPATH="$WIN_DOTNET\\v3.5;$WIN_DOTNET\\v2.0.50727;$WIN_VCDIR\\lib"
+		INCLUDE="$VCDIR\include;$WSDKDIR\include"
+		LIB="$VCDIR\lib;$WSDKDIR\lib"
+		LIBPATH="$DOTNET\v3.5;$DOTNET\v2.0.50727;$VCDIR\lib"
 
 		# The PATH variable should be Cygwin'ish
-		# AND we'll ensure that the paths are converted to short-names
-		# to prevent any wrapper scripts from blowing up!
-		VCROOT=`cygpath -d "$WIN_VCROOT" | xargs cygpath`
-		VCDIR="$VCROOT/VC"
-		COMDIR="$VCROOT/Common7"
-		WSDKDIR=`cygpath -d "$WIN_WSDKDIR" | xargs cygpath`
-		DOTNET=`cygpath -d "$WIN_DOTNET" | xargs cygpath`
-
-		PATH="$WSDKDIR/bin:$PATH"
-		PATH="$COMDIR/IDE:$PATH"
-		PATH="$VCDIR/bin:$PATH"
-		PATH="$COMDIR/Tools:$PATH"
-		PATH="$COMDIR/Tools/bin:$PATH"
-		PATH="$DOTNET/v3.5:$DOTNET/v2.0.50727:$PATH"
-		PATH="$VCDIR/vcPackages:$PATH"
+		# BUT we'll leave the PATH sanitation to the
+		# eval `./otp_build env_win32`
+		# build step.
+		PATH="$WSDKDIR\bin:$PATH"
+		PATH="$COMDIR\IDE:$PATH"
+		PATH="$VCDIR\bin:$PATH"
+		PATH="$COMDIR\Tools:$PATH"
+		PATH="$COMDIR\Tools/bin:$PATH"
+		PATH="$DOTNET\v3.5:$DOTNET\v2.0.50727:$PATH"
+		PATH="$VCDIR\vcPackages:$PATH"
 
 		export INCLUDE LIB LIBPATH PATH
 
@@ -429,13 +426,20 @@ A big thanks to Dan Gudmundsson on this one. :)
 
 #####################################################
 
-11) Enter the VC2008 shell
+10) Enter the VC2008 shell
 
 		$ vcshell
 		Say 'exit' to leave VC2008 shell and restore Cygwin environment.
 		VC2008: otp_src_R13B02-1 $
 	
 	 (from now on all commands are assumed to be run inside this subshell)
+
+
+#####################################################
+
+11) Setup the environment for building under windows:
+
+		$ eval `./otp_build env_win32`
 
 
 #####################################################
